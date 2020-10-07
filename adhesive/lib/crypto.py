@@ -1,18 +1,16 @@
+import binascii
 import cryptography.hazmat.primitives as primitives
-from axolotl.util import KeyHelper
-from axolotl.ecc import Curve
-from typing import PathLike
+from axolotl.util.keyhelper import KeyHelper
+from axolotl.ecc.curve import Curve
+from axolotl.ecc.djbec import DjbECPrivateKey
+from os import PathLike
 
-# https://github.com/signalapp/Signal-Desktop/blob/v1.36.3/ts/Crypto.ts#L124
-
-def encrypt_attachment(key: bytes, path: PathLike, plaintext: bytes):
-	uniq_id = get_attachment_label(path)
-	return encrypt_file(key, unique_id, plaintext)
+# https://github.com/signalapp/Signal-Desktop/blob/v1.36.3/ts/Crypto.ts#L152
 
 def encrypt_file(key: bytes, unique_id: bytes, plaintext: bytes):
 	ephemeral_key_pair = KeyHelper.generateIdentityKeyPair()
-	agreement = Curve.calculateAgreement(key, ephemeral_key_pair.privKey)
-	prefix = ephemeral_key_pair.pubKey[:1]
+	agreement = Curve.calculateAgreement(key, ephemeral_key_pair.privateKey)
+	prefix = ephemeral_key_pair.publicKey[1:]
 	return prefix + encrypt_symmetric(key, plaintext)
 
 IV_LENGTH = 16
@@ -20,7 +18,7 @@ MAC_LENGTH = 16
 NONCE_LENGTH = 16
 
 def encrypt_symmetric(key: bytes, plaintext: bytes) -> bytes:
-	iv = bytearray(IV_LENGTH)
+	iv = b'\0' * IV_LENGTH
 	nonce = secrets.token_bytes(NONCE_LENGTH)
 	cipher_key = hmac_sha256(key, nonce)
 	mac_key = hmac_sha256(key, cipher_key)
