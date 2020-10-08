@@ -1,13 +1,15 @@
+import aiohttp
 from aiohttp import ClientSession as HttpSession
 import dataclasses
 import operator
 import secrets
 import ssl
 from dataclasses import dataclass
-from typing import List, Dict, NewType, Optional
+from typing import List, Tuple, Dict, NewType, Optional
 from pathlib import Path
 
-from .crypto import encrypt_file as encrypt
+from . import auth
+from .crypto import encrypt_attachment
 from axolotl.kdf.hkdf import HKDF
 from .signal_stickers import StickerImage
 from .stickers_pb2 import StickerPack
@@ -33,6 +35,9 @@ class WebApi:
 				'User-Agent': 'Signal Desktop ' + self.version,
 				'X-Signal-Agent': 'OWD',
 			},
+			trust_env=True,
+			raise_for_status=True,
+			auth=aiohttp.BasicAuth(*auth.get_credentials()),
 		)
 		self.ssl = ssl.create_default_context(cafile=Path(__file__).parent / 'signal-ca.crt')
 
@@ -47,29 +52,33 @@ class WebApi:
 		cover: StickerImage
 	):
 		pack_key = secrets.token_bytes(32)
-		enc_key = self.derive_sticker_pack_key(pack_key)
+		aes_key, mac_key = self.derive_sticker_pack_keys(pack_key)
 		iv = secrets.token_bytes(16)
 
-		enc_manifest = encrypt(manifest.SerializeToString(), enc_key, iv)
+		enc_manifest = encrypt_attachment(manifest.SerializeToString(), aes_key, mac_key, iv)
 		# TODO do this in parallel
-		enc_stickers = [encrypt(sticker.image, enc_key, iv) for sticker in stickers + [cover]]
+		enc_stickers = [encrypt_attachment(sticker.image, aes_key, mac_key, iv) for sticker in stickers + [cover]]
 
 		# get manifest and sticker upload parameters
 		async with self._http.get(
-			f'{self.cdn_url_map[0]}/v1/sticker/pack/form/{len(stickers)}',
+			f'{self.cdn_urls[0]}/v1/sticker/pack/form/{len(stickers)}',
 			ssl=self.ssl,
 			proxy=self.proxy_url,
 		) as resp:
-			print(await resp.json())
+			print(await resp.text())
 			a
 
 		manifest_params = self.make_put_params(manifest, enc_manifest)
 
 	@staticmethod
-	def derive_sticker_pack_key(pack_key: bytes):
+	def derive_sticker_pack_keys(pack_key: bytes) -> Tuple[bytes, bytes]:
 		salt = b'\0' * 32
 		info = b'Signal Sticker Pack'
-		return HKDF().deriveSecrets(inputKeyMaterial=pack_key, salt=salt, info=info, outputLength=32)
+		keys = HKDF().deriveSecrets(inputKeyMaterial=pack_key, salt=salt, info=info, outputLength=32 * 2)
+		assert len(keys) == 32 * 2
+		aes_key = keys[:32]
+		mac_key = keys[32:64]
+		return aes_key, mac_key
 
 	@classmethod
 	def from_config(cls, config: dict):
