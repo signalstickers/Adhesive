@@ -14,6 +14,25 @@ logger = logging.getLogger(__name__)
 
 THREAD_LIMITER = None
 
+async def convert_interactive(tg_client, stickers_client, link):
+	try:
+		converter, pack_info = parse_link(link)
+	except ValueError:
+		yield 'Invalid sticker pack link provided. Run /start for help.'
+		return
+
+	yield (
+		f'Converting this pack to {"Signal" if converter is convert_to_signal else "Telegram"}. '
+		'Hold on to your butts…'
+	)
+
+	try:
+		converted_link = await converter(tg_client, stickers_client, *pack_info)
+	except NotImplementedError as exc:
+		yield exc.args[0]
+	else:
+		yield converted_link
+
 def parse_link(link: str):
 	parsed = urllib.parse.urlparse(link)
 	# TODO deduplicate this mess
@@ -42,7 +61,7 @@ def parse_link(link: str):
 
 	return converter, pack_info
 
-async def convert_to_signal(tg_client, signal_client, pack_name):
+async def convert_to_signal(tg_client, stickers_client, pack_name):
 	input_sticker_set = tl.types.InputStickerSetShortName(short_name=pack_name)
 	tg_pack = await tg_client(tl.functions.messages.GetStickerSetRequest(stickerset=input_sticker_set))
 	if tg_pack.set.animated:
@@ -66,7 +85,7 @@ async def convert_to_signal(tg_client, signal_client, pack_name):
 
 	del stickers
 
-	pack_id, pack_key = await signal_client.upload_pack(signal_pack)
+	pack_id, pack_key = await stickers_client.upload_pack(signal_pack)
 	return f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
 
 async def download_tg_cover(tg_client, signal_pack, tg_pack):
@@ -131,5 +150,5 @@ async def convert_tgs_to_apng(data):
 	await anyio.run_sync_in_worker_thread(export_apng, anim, apng, limiter=THREAD_LIMITER)
 	return apng
 
-async def convert_to_telegram(tg_client, signal_client, pack_id, pack_key):
-	...
+async def convert_to_telegram(tg_client, stickers_client, pack_id, pack_key):
+	raise NotImplementedError('Signal → Telegram conversion is not supported yet.')
