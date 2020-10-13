@@ -5,10 +5,10 @@ import urllib.parse
 
 import anyio
 from signalstickers_client import models as signal_models
-from lottie.importers.core import import_tgs
+#from lottie.importers.core import import_tgs
 from telethon import tl
 
-from .apng import export_apng
+#from .apng import export_apng
 
 logger = logging.getLogger(__name__)
 
