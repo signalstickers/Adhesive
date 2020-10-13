@@ -39,11 +39,13 @@ async def main():
 	)
 
 	tg_client = build_tg_client(config, stickers_client)
-	signal_client = build_signal_client(config, tg_client, stickers_client)
+	if config['signal'].get('username'):
+		signal_client = build_signal_client(config, tg_client, stickers_client)
 
 	async with anyio.create_task_group() as tg:
 		await tg.spawn(run_telegram, tg_client)
-		await tg.spawn(run_signal, signal_client)
+		if config['signal'].get('username'):
+			await tg.spawn(run_signal, signal_client)
 
 if __name__ == '__main__':
 	anyio.run(main)
