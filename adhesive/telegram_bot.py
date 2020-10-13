@@ -42,6 +42,11 @@ async def convert(event):
 		await event.respond('Invalid sticker pack link provided. Run /start for help.')
 		return
 
+	await event.respond(
+		f'Converting this pack to {"Signal" if converter.__name__ == "convert_to_signal" else "Telegram"}. '
+		'Hold on to your butts…'
+	)
+
 	try:
 		converted_link = await converter(event.client, event.client.signal_client, *pack_info)
 	except NotImplementedError as exc:
