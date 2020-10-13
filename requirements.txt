@@ -2,6 +2,8 @@
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
 toml>=0.10.1,<0.11.0
+# for converting Telegram animated stickers to animated WEBP
+lottie[gif]>=0.6.6,<0.7.0
 
 # telegram bot deps
 telethon>=1.16.4,<2.0.0
