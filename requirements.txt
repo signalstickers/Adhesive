@@ -2,6 +2,7 @@
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
 toml>=0.10.1,<0.11.0
+
 # for converting Telegram animated stickers to animated WEBP
 lottie[gif]>=0.6.6,<0.7.0
 
@@ -12,6 +13,5 @@ telethon>=1.16.4,<2.0.0
 sqlcipher3-binary>=0.4.2,<0.5.0
 # installing from git because my AnyIO PR has not been merged yet
 signalstickers-client @ git+https://github.com/iomintz/signalstickers-client.git@pr/anyio
-# installing from git because my AnyIO PR has not been pushed to PyPI yet, and my requirements fix hasn't been merged
-# yet either
-semaphore-bot @ git+https://github.com/iomintz/semaphore.git@pr/relax-requirements
+# installing from git because my AnyIO PR has not been pushed to PyPI yet
+semaphore-bot @ git+https://github.com/lwesterhof/semaphore.git
