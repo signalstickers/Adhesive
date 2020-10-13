@@ -1,18 +1,15 @@
 # assume all deps use semver, tighten otherwise
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
-# general deps
 toml>=0.10.1,<0.11.0
 
 # telegram bot deps
 telethon>=1.16.4,<2.0.0
 
-# signal API deps
-aiohttp>=3.6.2,<4.0.0
-protobuf>=3.13.0,<4.0.0
+# signal deps
 sqlcipher3-binary>=0.4.2,<0.5.0
-python-axolotl>=0.2.3,<0.3.0
-cryptography>=3.1.1,<4.0.0
-
-# signal bot deps
-semaphore-bot>=0.7.0,<0.8.0
+# installing from git because my AnyIO PR has not been merged yet
+signalstickers-client @ git+https://github.com/iomintz/signalstickers-client.git@pr/anyio
+# installing from git because my AnyIO PR has not been pushed to PyPI yet, and my requirements fix hasn't been merged
+# yet either
+semaphore-bot @ git+https://github.com/iomintz/semaphore.git@pr/relax-requirements
