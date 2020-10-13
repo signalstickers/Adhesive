@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import io
 import textwrap
 import urllib.parse
 
@@ -8,8 +7,8 @@ import anyio
 import telethon
 from telethon import TelegramClient, errors, events, tl
 from signalstickers_client import StickersClient as SignalStickersClient
-from signalstickers_client import models as signal_models
-from lottie.importers.core import import_tgs
+
+from .glue import convert_to_signal, convert_to_telegram
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -65,78 +64,11 @@ async def convert(event):
 		await event.respond('Invalid sticker pack link provided. Run /start for help.')
 		return
 
-	await event.respond(f'Parsed link: {converter} {pack_info}')
-	await converter(event, *pack_info)
+	await event.respond(await converter(event.client, event.client.signal_client, *pack_info))
 
-async def convert_to_signal(event, pack_name):
-	tg_pack = await event.client(tl.functions.messages.GetStickerSetRequest(
-		stickerset=tl.types.InputStickerSetShortName(short_name=pack_name)
-	))
-
-	# we use a dict so that we can preserve order as stickers are downloaded asynchronously
-	stickers = {}
-
-	signal_pack = signal_models.LocalStickerPack()
-	signal_pack.title = tg_pack.set.title
-	signal_pack.author = 'https://t.me/addstickers/' + pack_name
-
-	async with anyio.create_task_group() as tg:
-		for i, tg_sticker in enumerate(tg_pack.documents):
-			await tg.spawn(add_tg_sticker, event, stickers, i, tg_sticker)
-
-	for i in range(len(stickers)):
-		signal_pack.stickers.append(stickers[i])
-
-	del stickers
-
-	pack_id, pack_key = await event.client.signal_client.upload_pack(signal_pack)
-	await event.respond(f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}')
-
-async def add_tg_sticker(event, signal_stickers: dict, sticker_id: int, tg_sticker):
-	signal_sticker = signal_models.Sticker()
-	signal_sticker.id = sticker_id
-	signal_sticker.emoji = next(
-		attr
-		for attr in tg_sticker.attributes
-		if isinstance(attr, tl.types.DocumentAttributeSticker)
-	).alt
-
-	data = io.BytesIO()
-	async for chunk in event.client.iter_download(tg_sticker):
-		data.write(chunk)
-	data.seek(0)
-
-	if tg_sticker.mime_type == 'application/x-tg-sticker':
-		webp_data = convert_tgs_to_webp(data)
-	elif tg_sticker.mime_type == 'image/webp':
-		webp_data = data
-	else:
-		raise RuntimeError('unexpected image type', tg_sticker.mime_type, 'found in pack', pack_name)
-
-	signal_sticker.image_data = data.getvalue()
-
-	signal_stickers[sticker_id] = signal_sticker
-
-def convert_tgs_to_webp(data):
-	decompressed = io.BytesIO()
-	with gzip.open(data) as gz:
-		decompressed.write(gz.read())
-
-	decompressed.seek(0)
-	del data
-
-	anim = import_tgs(decompressed)
-
-
-async def convert_to_telegram(event, pack_id, pack_key):
-	...
-
-def build_client():
-	import toml
-	with open('config.toml') as f:
-		config = toml.load(f)
-		tg_config = config['telegram']
-		signal_stickers_config = config['signal']['stickers']
+def build_client(config):
+	tg_config = config['telegram']
+	signal_stickers_config = config['signal']['stickers']
 
 	client = TelegramClient(tg_config.get('session_name', 'adhesive'), tg_config['api_id'], tg_config['api_hash'])
 	client.config = tg_config
@@ -150,11 +82,18 @@ def build_client():
 
 	return client
 
-async def main():
-	client = build_client()
+async def run(config):
+	client = build_client(config)
 	await client.start(bot_token=client.config['api_token'])
 	async with client:
 		await client.run_until_disconnected()
 
+def main():
+	import toml
+	with open('config.toml') as f:
+		config = toml.load(f)
+
+	anyio.run(run, config)
+
 if __name__ == '__main__':
-	anyio.run(main)
+	main()
