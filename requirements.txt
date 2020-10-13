@@ -14,6 +14,5 @@ telethon>=1.16.4,<2.0.0
 sqlcipher3-binary>=0.4.2,<0.5.0
 # installing from git because my AnyIO PR has not been merged yet
 signalstickers-client @ git+https://github.com/iomintz/signalstickers-client.git@pr/anyio
-# installing from git because my AnyIO PR has not been pushed to PyPI yet, and my ctx.bot attribute PR
-# has not been merged yet
-semaphore-bot @ git+https://github.com/iomintz/semaphore.git@pr/add-ctx.bot
+# installing from git because my AnyIO PR has not been pushed to PyPI yet
+semaphore-bot @ git+https://github.com/lwesterhof/semaphore.git
