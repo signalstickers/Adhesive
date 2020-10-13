@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
 import textwrap
-import urllib.parse
 
 import anyio
 import telethon
 from telethon import TelegramClient, errors, events, tl
 from signalstickers_client import StickersClient as SignalStickersClient
 
-from .glue import convert_to_signal, convert_to_telegram
+from .glue import parse_link
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -37,34 +36,18 @@ async def intro(event):
 
 @register_event(events.NewMessage(pattern=r'^(https?|sgnl|tg)://'))
 async def convert(event):
-	link = event.message.message
-	parsed = urllib.parse.urlparse(link)
-	# TODO deduplicate this mess
 	try:
-		if parsed.scheme in ('http', 'https'):
-			if parsed.netloc == 't.me':
-				pack_info = (parsed.path.rpartition('/')[-1],)
-				converter = convert_to_signal
-			elif parsed.netloc == 'signal.art':
-				query = dict(urllib.parse.parse_qsl(parsed.fragment))
-				pack_info = query['pack_id'], query['pack_key']
-				converter = convert_to_telegram
-			else:
-				raise ValueError
-		elif parsed.scheme == 'tg':
-			pack_info = (parsed.path.rpartition('/')[-1],)
-			converter = convert_to_signal
-		elif parsed.scheme == 'sgnl':
-			query = dict(urllib.parse.parse_qsl(parsed.query))
-			pack_info = query['pack_id'], query['pack_key']
-			converter = convert_to_telegram
-		else:
-			raise ValueError
-	except (KeyError, ValueError):
+		converter, pack_info = parse_link(event.message.message)
+	except ValueError:
 		await event.respond('Invalid sticker pack link provided. Run /start for help.')
 		return
 
-	await event.respond(await converter(event.client, event.client.signal_client, *pack_info))
+	try:
+		converted_link = await converter(event.client, event.client.signal_client, *pack_info)
+	except NotImplementedError as exc:
+		await event.respond(exc.args[0])
+	else:
+		await event.respond(converted_link)
 
 def build_client(config):
 	tg_config = config['telegram']
