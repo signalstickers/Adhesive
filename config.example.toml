@@ -1,0 +1,19 @@
+source_code_url = 'https://github.com/iomintz/Adhesive'
+
+[telegram]
+# access api_id and api_hash at https://my.telegram.org/apps
+api_id = 123
+api_hash = 'deadbeef'
+# get this from The BotFather
+api_token = '1234:deadbea7cafe'
+session_name = 'anon'
+
+[signal]
+# signal phone number that you have registered with signald
+username = '***REMOVED***'
+
+[signal.stickers]
+# get these by running `python -m adhesive.signal_auth`
+# username is NOT the same as your phone number
+username = '...'
+password = '...'

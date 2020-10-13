@@ -60,3 +60,8 @@ def get_credentials():
 		raise LookupError('Please set up Signal on your phone and desktop to use the Signal sticker packs')
 
 	return Credentials(username or old_username, password)
+
+if __name__ == '__main__':
+	username, password = get_credentials()
+	print(f"username = '{username}'")
+	print(f"password = '{password}'")
