@@ -12,8 +12,9 @@ from .glue import convert_link_interactive, convert_pack_interactive, convert_to
 from .bot import INTRO, build_stickers_client
 
 import logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+# this logger is a bit too noisy for my liking
+logging.getLogger('telethon.client.downloads').setLevel(logging.WARNING)
 
 # so that we can register them all in the correct order later (globals() is not guaranteed to be ordered)
 event_handlers = []
