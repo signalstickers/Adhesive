@@ -7,6 +7,9 @@ toml>=0.10.1,<0.11.0
 #lottie>=0.6.6,<0.7.0
 #apng>=0.3.4,<0.4.0
 
+# for converting Signal stickers from WEBP to PNG
+Pillow-SIMD>=7.1.2,<8.0.0
+
 # telegram bot deps
 telethon>=1.16.4,<2.0.0
 
