@@ -97,11 +97,10 @@ async def convert_to_signal(tg_client, stickers_client, pack):
 	signal_pack.stickers = [None] * tg_pack.set.count
 	signal_pack.author = 'https://t.me/addstickers/' + tg_pack.set.short_name
 
-	async with anyio.create_task_group() as tg:
-		if tg_pack.set.thumb is not None:
-			await tg.spawn(download_tg_cover, tg_client, signal_pack, tg_pack)
-		for i, tg_sticker in enumerate(tg_pack.documents):
-			await tg.spawn(add_tg_sticker, tg_client, signal_pack, i, tg_sticker)
+	if tg_pack.set.thumb is not None:
+		await download_tg_cover(tg_client, signal_pack, tg_pack)
+	for i, tg_sticker in enumerate(tg_pack.documents):
+		await add_tg_sticker(tg_client, signal_pack, i, tg_sticker)
 
 	pack_id, pack_key = await stickers_client.upload_pack(signal_pack)
 	yield f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
