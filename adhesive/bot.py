@@ -10,6 +10,8 @@ To begin, send me a link to either kind of sticker pack. Here's what a Telegram 
 And here's a Signal sticker pack:
 `https://signal.art/addstickers/#pack_id=9acc9e8aba563d26a4994e69263e3b25&pack_key=5a6dff3948c28efb9b7aaf93ecc375c69fc316e78077ed26867a14d10a0f6a12`
 
+You can also just send me a sticker and I'll convert the pack that it's from.
+
 This bot is open-source software under the terms of the AGPLv3 license. You can find the source code at:
 """
 

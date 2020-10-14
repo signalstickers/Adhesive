@@ -1,6 +1,7 @@
 import semaphore
+from semaphore import StopPropagation
 from .bot import INTRO, build_stickers_client
-from .glue import convert_interactive
+from .glue import convert_link_interactive, convert_pack_interactive, convert_to_telegram
 
 # Signal doesn't support markdown
 INTRO = INTRO.replace('`', '')
@@ -15,10 +16,23 @@ def handler(pattern):
 @handler(r'^/start')
 async def intro(ctx):
 	await ctx.message.reply(INTRO + ctx.bot.source_code_url)
+	raise StopPropagation
 
 @handler(r'^(https?|sgnl|tg)://')
 async def convert(ctx):
 	async for response in convert_interactive(ctx.bot.tg_client, ctx.bot.stickers_client, ctx.message.get_body()):
+		await ctx.message.reply(response)
+
+	raise StopPropagation
+
+@handler('')
+async def convert_sticker(ctx):
+	sticker = ctx.message.get_sticker()
+	if sticker is None:
+		return
+	async for response in convert_pack_interactive(
+		ctx.bot.tg_client, ctx.bot.stickers_client, convert_to_telegram, sticker.pack.pack_id, sticker.pack.pack_key,
+	):
 		await ctx.message.reply(response)
 
 def build_client(config, tg_client, stickers_client):

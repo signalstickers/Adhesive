@@ -14,13 +14,18 @@ logger = logging.getLogger(__name__)
 
 THREAD_LIMITER = None
 
-async def convert_interactive(tg_client, stickers_client, link):
+async def convert_link_interactive(tg_client, stickers_client, link):
 	try:
 		converter, pack_info = parse_link(link)
 	except ValueError:
 		yield 'Invalid sticker pack link provided. Run /start for help.'
 		return
 
+	async for response in convert_pack_interactive(tg_client, stickers_client, converter, *pack_info):
+		yield response
+
+
+async def convert_pack_interactive(tg_client, stickers_client, converter, *pack_info):
 	yield (
 		f'Converting this pack to {"Signal" if converter is convert_to_signal else "Telegram"}. '
 		'Hold on to your butts…'
@@ -61,8 +66,11 @@ def parse_link(link: str):
 
 	return converter, pack_info
 
-async def convert_to_signal(tg_client, stickers_client, pack_name):
-	input_sticker_set = tl.types.InputStickerSetShortName(short_name=pack_name)
+async def convert_to_signal(tg_client, stickers_client, pack):
+	if isinstance(pack, str):
+		input_sticker_set = tl.types.InputStickerSetShortName(short_name=pack)
+	else:
+		input_sticker_set = pack
 	tg_pack = await tg_client(tl.functions.messages.GetStickerSetRequest(stickerset=input_sticker_set))
 	if tg_pack.set.animated:
 		raise NotImplementedError('Animated packs are not supported yet.')
@@ -72,7 +80,7 @@ async def convert_to_signal(tg_client, stickers_client, pack_name):
 
 	signal_pack = signal_models.LocalStickerPack()
 	signal_pack.title = tg_pack.set.title
-	signal_pack.author = 'https://t.me/addstickers/' + pack_name
+	signal_pack.author = 'https://t.me/addstickers/' + tg_pack.set.short_name
 
 	async with anyio.create_task_group() as tg:
 		if tg_pack.set.thumb is not None:

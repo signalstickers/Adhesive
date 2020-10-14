@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import textwrap
+from functools import wraps
 
 import anyio
 import telethon
 from telethon import TelegramClient, errors, events, tl
 from signalstickers_client import StickersClient as SignalStickersClient
 
-from .glue import convert_interactive
+from .glue import convert_link_interactive, convert_pack_interactive, convert_to_signal
 from .bot import INTRO, build_stickers_client
 
 import logging
@@ -25,10 +26,33 @@ def register_event(*args, **kwargs):
 @register_event(events.NewMessage(pattern=r'^/start'))
 async def intro(event):
 	await event.respond(INTRO + event.client.source_code_url)
+	raise events.StopPropagation
 
 @register_event(events.NewMessage(pattern=r'^(https?|sgnl|tg)://'))
 async def convert(event):
-	async for response in convert_interactive(event.client, event.client.stickers_client, event.message.message):
+	async for response in convert_link_interactive(event.client, event.client.stickers_client, event.message.message):
+		await event.respond(response)
+	raise events.StopPropagation
+
+def sticker_message_required(handler):
+	@wraps(handler)
+	async def wrapped_handler(event):
+		message = event.message
+		if not isinstance(message.media, tl.types.MessageMediaDocument):
+			return
+		for attr in message.media.document.attributes:
+			if isinstance(attr, tl.types.DocumentAttributeSticker):
+				event.sticker_set = attr.stickerset
+				return await handler(event)
+
+	return wrapped_handler
+
+@register_event(events.NewMessage)
+@sticker_message_required
+async def convert_sticker(event):
+	async for response in convert_pack_interactive(
+		event.client, event.client.stickers_client, convert_to_signal, event.sticker_set,
+	):
 		await event.respond(response)
 
 def build_client(config, stickers_client):
