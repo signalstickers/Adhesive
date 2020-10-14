@@ -5,6 +5,7 @@ import urllib.parse
 
 import anyio
 import telethon.utils
+import telethon.errors
 from signalstickers_client import models as signal_models
 #from lottie.importers.core import import_tgs
 from telethon import tl
@@ -29,16 +30,23 @@ async def convert_link_interactive(tg_client, stickers_client, link):
 
 
 async def convert_pack_interactive(tg_client, stickers_client, converter, *pack_info):
-	yield (
+	in_progress_message = (
 		f'Converting this pack to {"Signal" if converter is convert_to_signal else "Telegram"}. '
 		'Hold on to your butts…'
 	)
 
+	# This seems like a pretty strange thing to do. Allow me to explain.
+	# Converter functions are async generators which are expected to either raise an error,
+	# or yield. If they yield, then that means that all checks passed and the conversion
+	# has begun. The last thing they should yield is the resulting link.
 	try:
-		converted_link = await converter(tg_client, stickers_client, *pack_info)
-	except NotImplementedError as exc:
+		generator = converter(tg_client, stickers_client, *pack_info)
+		await generator.__anext__()
+	except (ValueError, NotImplementedError) as exc:
 		yield exc.args[0]
 	else:
+		yield in_progress_message
+		converted_link = await generator.__anext__()
 		yield converted_link
 
 def parse_link(link: str):
@@ -74,7 +82,13 @@ async def convert_to_signal(tg_client, stickers_client, pack):
 		input_sticker_set = tl.types.InputStickerSetShortName(short_name=pack)
 	else:
 		input_sticker_set = pack
-	tg_pack = await tg_client(tl.functions.messages.GetStickerSetRequest(stickerset=input_sticker_set))
+	try:
+		tg_pack = await tg_client(tl.functions.messages.GetStickerSetRequest(input_sticker_set))
+	except telethon.errors.StickersetInvalidError:
+		raise ValueError('Sticker pack not found.')
+
+	yield
+
 	if tg_pack.set.animated:
 		raise NotImplementedError('Animated packs are not supported yet.')
 
@@ -90,7 +104,7 @@ async def convert_to_signal(tg_client, stickers_client, pack):
 			await tg.spawn(add_tg_sticker, tg_client, signal_pack, i, tg_sticker)
 
 	pack_id, pack_key = await stickers_client.upload_pack(signal_pack)
-	return f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
+	yield f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
 
 async def download_tg_cover(tg_client, signal_pack, tg_pack):
 	signal_sticker = signal_models.Sticker()
@@ -155,8 +169,26 @@ async def convert_tgs_to_apng(data):
 	return apng
 
 async def convert_to_telegram(tg_client, stickers_client, pack_id, pack_key):
-	pack = await stickers_client.get_pack(pack_id, pack_key)
+	# first make sure it's a valid sticker pack
+	try:
+		pack = await stickers_client.get_pack(pack_id, pack_key)
+	except Exception:
+		raise ValueError('Sticker pack not found.')
+
 	stickers = []
+
+	# then make sure we haven't already converted this one
+	# this _by_<bot username> suffix is mandatory
+	tg_short_name = f'signal_{pack_id}_by_{tg_client.user.username}'
+
+	try:
+		await tg_client(tl.functions.messages.GetStickerSetRequest(tl.types.InputStickerSetShortName(tg_short_name)))
+	except telethon.errors.StickersetInvalidError:
+		pass
+	else:
+		raise ValueError('This sticker pack has been converted before as https://t.me/addstickers/' + tg_short_name)
+
+	yield
 
 	# used to do this in parallel but that just caused a lot of rate-limiting
 	for sticker in pack.stickers:
@@ -166,8 +198,7 @@ async def convert_to_telegram(tg_client, stickers_client, pack_id, pack_key):
 		# this user id can be anyone but it has to not be a bot
 		user_id='gnu_unix_grognard',
 		title=f'{pack.title} by {pack.author}',
-		# this _by_<bot username> suffix is mandatory
-		short_name=f'signal_{pack_id}_by_{tg_client.user.username}',
+		short_name=tg_short_name,
 		stickers=stickers,
 		thumb=pack.cover and await upload_document(
 			tg_client,
@@ -176,7 +207,7 @@ async def convert_to_telegram(tg_client, stickers_client, pack_id, pack_key):
 		),
 	))
 
-	return 'https://t.me/addstickers/' + tg_pack.set.short_name
+	yield 'https://t.me/addstickers/' + tg_pack.set.short_name
 
 async def convert_signal_sticker(tg_client, signal_sticker):
 	return tl.types.InputStickerSetItem(
