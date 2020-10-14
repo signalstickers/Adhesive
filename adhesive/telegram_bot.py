@@ -71,7 +71,8 @@ def build_client(config, stickers_client):
 
 async def run(client):
 	await client.start(bot_token=client.config['api_token'])
-	async with client:
+	client.user = await client.get_me()
+	async with client, client.stickers_client:
 		await client.run_until_disconnected()
 
 def main():

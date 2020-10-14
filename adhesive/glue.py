@@ -4,9 +4,12 @@ import logging
 import urllib.parse
 
 import anyio
+import telethon.utils
 from signalstickers_client import models as signal_models
 #from lottie.importers.core import import_tgs
 from telethon import tl
+
+import PIL.Image
 
 #from .apng import export_apng
 
@@ -75,23 +78,16 @@ async def convert_to_signal(tg_client, stickers_client, pack):
 	if tg_pack.set.animated:
 		raise NotImplementedError('Animated packs are not supported yet.')
 
-	# we use a dict so that we can preserve order as stickers are downloaded asynchronously
-	stickers = {}
-
 	signal_pack = signal_models.LocalStickerPack()
 	signal_pack.title = tg_pack.set.title
+	signal_pack.stickers = [None] * tg_pack.set.count
 	signal_pack.author = 'https://t.me/addstickers/' + tg_pack.set.short_name
 
 	async with anyio.create_task_group() as tg:
 		if tg_pack.set.thumb is not None:
 			await tg.spawn(download_tg_cover, tg_client, signal_pack, tg_pack)
 		for i, tg_sticker in enumerate(tg_pack.documents):
-			await tg.spawn(add_tg_sticker, tg_client, stickers, i, tg_sticker)
-
-	for i in range(len(stickers)):
-		signal_pack.stickers.append(stickers[i])
-
-	del stickers
+			await tg.spawn(add_tg_sticker, tg_client, signal_pack, i, tg_sticker)
 
 	pack_id, pack_key = await stickers_client.upload_pack(signal_pack)
 	return f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
@@ -110,7 +106,7 @@ async def download_tg_cover(tg_client, signal_pack, tg_pack):
 	)
 	signal_pack.cover = signal_sticker
 
-async def add_tg_sticker(tg_client, signal_stickers: dict, sticker_id: int, tg_sticker):
+async def add_tg_sticker(tg_client, signal_pack: signal_models.LocalStickerPack, sticker_id: int, tg_sticker):
 	signal_sticker = signal_models.Sticker()
 	signal_sticker.id = sticker_id
 	signal_sticker.emoji = next(
@@ -136,7 +132,7 @@ async def add_tg_sticker(tg_client, signal_stickers: dict, sticker_id: int, tg_s
 
 	signal_sticker.image_data = image_data.getvalue()
 
-	signal_stickers[sticker_id] = signal_sticker
+	signal_pack.stickers[sticker_id] = signal_sticker
 
 async def convert_tgs_to_apng(data):
 	global THREAD_LIMITER
@@ -159,4 +155,56 @@ async def convert_tgs_to_apng(data):
 	return apng
 
 async def convert_to_telegram(tg_client, stickers_client, pack_id, pack_key):
-	raise NotImplementedError('Signal → Telegram conversion is not supported yet.')
+	pack = await stickers_client.get_pack(pack_id, pack_key)
+	stickers = []
+
+	# used to do this in parallel but that just caused a lot of rate-limiting
+	for sticker in pack.stickers:
+		stickers.append(await convert_signal_sticker(tg_client, sticker))
+
+	tg_pack = await tg_client(tl.functions.stickers.CreateStickerSetRequest(
+		# this user id can be anyone but it has to not be a bot
+		user_id='gnu_unix_grognard',
+		title=f'{pack.title} by {pack.author}',
+		# this _by_<bot username> suffix is mandatory
+		short_name=f'signal_{pack_id}_by_{tg_client.user.username}',
+		stickers=stickers,
+		thumb=pack.cover and await upload_document(
+			tg_client,
+			'image/png',
+			await webp_to_png(pack.cover.image_data, thumbnail=True)
+		),
+	))
+
+	return 'https://t.me/addstickers/' + tg_pack.set.short_name
+
+async def convert_signal_sticker(tg_client, signal_sticker):
+	return tl.types.InputStickerSetItem(
+		document=await upload_document(tg_client, 'image/png', await webp_to_png(signal_sticker.image_data)),
+		emoji=signal_sticker.emoji,
+	)
+
+async def upload_document(tg_client, mime_type: str, data: bytes):
+	input_file = await tg_client.upload_file(data)
+	file = tl.types.InputMediaUploadedDocument(
+		file=input_file,
+		mime_type=mime_type,
+		attributes=[],
+	)
+	media = await tg_client(tl.functions.messages.UploadMediaRequest('me', await tg_client.upload_file(data)))
+	return telethon.utils.get_input_document(media)
+
+async def webp_to_png(image_data: bytes, *, thumbnail=False) -> bytes:
+	return await anyio.run_sync_in_worker_thread(_webp_to_png, image_data, thumbnail)
+
+def _webp_to_png(image_data: bytes, thumbnail=False) -> bytes:
+	input = io.BytesIO(image_data)
+	input.seek(0)
+	im = PIL.Image.open(input)
+	if thumbnail:
+		# normally this would distort the image, but we assume that all stickers are square anyway
+		im = im.resize((100, 100))
+	out = io.BytesIO()
+	im.save(out, format='PNG')
+	del input
+	return out.getvalue()
