@@ -10,7 +10,8 @@ session_name = 'anon'
 
 [signal]
 # signal phone number that you have registered with signald
-username = '***REMOVED***'
+# if this is not set, the signal bot will not run but everything else will function normally
+username = '+xxxxxxxxxxx'
 
 [signal.stickers]
 # get these by running `python -m adhesive.signal_auth`
