@@ -20,7 +20,12 @@ async def intro(ctx):
 
 @handler(r'^(https?|sgnl|tg)://')
 async def convert(ctx):
-	async for response in convert_link_interactive(ctx.bot.tg_client, ctx.bot.stickers_client, ctx.message.get_body()):
+	async for response in convert_link_interactive(
+		ctx.bot.db,
+		ctx.bot.tg_client,
+		ctx.bot.stickers_client,
+		ctx.message.get_body(),
+	):
 		await ctx.message.reply(response, quote=True)
 
 	raise StopPropagation
@@ -31,13 +36,19 @@ async def convert_sticker(ctx):
 	if sticker is None:
 		return
 	async for response in convert_pack_interactive(
-		ctx.bot.tg_client, ctx.bot.stickers_client, convert_to_telegram, sticker.pack.pack_id, sticker.pack.pack_key,
+		ctx.bot.db,
+		ctx.bot.tg_client,
+		ctx.bot.stickers_client,
+		convert_to_telegram,
+		sticker.pack.pack_id,
+		sticker.pack.pack_key,
 	):
 		await ctx.message.reply(response, quote=True)
 
-def build_client(config, tg_client, stickers_client):
+def build_client(config, db, tg_client, stickers_client):
 	bot = semaphore.Bot(config['signal']['username'])
 	bot.tg_client = tg_client
+	bot.db = db
 	bot.stickers_client = stickers_client
 	bot.source_code_url = config['source_code_url']
 	for pattern, callback in handlers:

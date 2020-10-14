@@ -31,7 +31,9 @@ async def intro(event):
 
 @register_event(events.NewMessage(pattern=r'^(https?|sgnl|tg)://'))
 async def convert(event):
-	async for response in convert_link_interactive(event.client, event.client.stickers_client, event.message.message):
+	async for response in convert_link_interactive(
+		event.client.db, event.client, event.client.stickers_client, event.message.message,
+	):
 		await event.reply(response)
 	raise events.StopPropagation
 
@@ -52,11 +54,11 @@ def sticker_message_required(handler):
 @sticker_message_required
 async def convert_sticker(event):
 	async for response in convert_pack_interactive(
-		event.client, event.client.stickers_client, convert_to_signal, event.sticker_set,
+		event.client.db, event.client, event.client.stickers_client, convert_to_signal, event.sticker_set,
 	):
 		await event.reply(response)
 
-def build_client(config, stickers_client):
+def build_client(config, db, stickers_client):
 	tg_config = config['telegram']
 	signal_stickers_config = config['signal']['stickers']
 
@@ -64,6 +66,7 @@ def build_client(config, stickers_client):
 	client.config = tg_config
 	client.source_code_url = config['source_code_url']
 	client.stickers_client = stickers_client
+	client.db = db
 
 	for handler in event_handlers:
 		client.add_event_handler(handler)
@@ -73,18 +76,5 @@ def build_client(config, stickers_client):
 async def run(client):
 	await client.start(bot_token=client.config['api_token'])
 	client.user = await client.get_me()
-	async with client, client.stickers_client:
+	async with client:
 		await client.run_until_disconnected()
-
-def main():
-	import toml
-	with open('config.toml') as f:
-		config = toml.load(f)
-
-	stickers_client = build_stickers_client(config)
-	client = build_client(config, stickers_client)
-
-	anyio.run(run, client)
-
-if __name__ == '__main__':
-	main()

@@ -1,5 +1,9 @@
 __pycache__/
 *.toml
 !*.example.toml
+# sqlite databases
 *.session
-*.session-journal
+db.sqlite3
+*-journal
+*-shm
+*-wal

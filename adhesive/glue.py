@@ -18,18 +18,18 @@ logger = logging.getLogger(__name__)
 
 THREAD_LIMITER = None
 
-async def convert_link_interactive(tg_client, stickers_client, link):
+async def convert_link_interactive(db, tg_client, stickers_client, link):
 	try:
 		converter, pack_info = parse_link(link)
 	except ValueError:
 		yield 'Invalid sticker pack link provided. Run /start for help.'
 		return
 
-	async for response in convert_pack_interactive(tg_client, stickers_client, converter, *pack_info):
+	async for response in convert_pack_interactive(db, tg_client, stickers_client, converter, *pack_info):
 		yield response
 
 
-async def convert_pack_interactive(tg_client, stickers_client, converter, *pack_info):
+async def convert_pack_interactive(db, tg_client, stickers_client, converter, *pack_info):
 	in_progress_message = (
 		f'Converting this pack to {"Signal" if converter is convert_to_signal else "Telegram"}. '
 		'Hold on to your butts…'
@@ -40,7 +40,7 @@ async def convert_pack_interactive(tg_client, stickers_client, converter, *pack_
 	# or yield. If they yield, then that means that all checks passed and the conversion
 	# has begun. The last thing they should yield is the resulting link.
 	try:
-		generator = converter(tg_client, stickers_client, *pack_info)
+		generator = converter(db, tg_client, stickers_client, *pack_info)
 		await generator.__anext__()
 	except (ValueError, NotImplementedError) as exc:
 		yield exc.args[0]
@@ -77,7 +77,7 @@ def parse_link(link: str):
 
 	return converter, pack_info
 
-async def convert_to_signal(tg_client, stickers_client, pack):
+async def convert_to_signal(db, tg_client, stickers_client, pack):
 	if isinstance(pack, str):
 		input_sticker_set = tl.types.InputStickerSetShortName(short_name=pack)
 	else:
@@ -86,6 +86,18 @@ async def convert_to_signal(tg_client, stickers_client, pack):
 		tg_pack = await tg_client(tl.functions.messages.GetStickerSetRequest(input_sticker_set))
 	except telethon.errors.StickersetInvalidError:
 		raise ValueError('Sticker pack not found.')
+
+	row = await db.fetchone(
+		"""
+		SELECT signal_pack_id, signal_pack_key
+		FROM packs
+		WHERE tg_hash = ?
+		""",
+		tg_pack.set.hash,
+	)
+	if row:
+		signal_pack_url = f'https://signal.art/addstickers/#pack_id={row[0].hex()}&pack_key={row[1].hex()}'
+		raise ValueError('This sticker pack has already been converted as ' + signal_pack_url)
 
 	yield
 
@@ -103,6 +115,15 @@ async def convert_to_signal(tg_client, stickers_client, pack):
 		await add_tg_sticker(tg_client, signal_pack, i, tg_sticker)
 
 	pack_id, pack_key = await stickers_client.upload_pack(signal_pack)
+
+	await db.execute(
+		"""
+		INSERT INTO packs (tg_hash, signal_pack_id, signal_pack_key)
+		VALUES (?, ?, ?)
+		""",
+		tg_pack.set.hash, bytes.fromhex(pack_id), bytes.fromhex(pack_key),
+	)
+
 	yield f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
 
 async def download_tg_cover(tg_client, signal_pack, tg_pack):

@@ -2,6 +2,7 @@
 
 import anyio
 from signalstickers_client import StickersClient as SignalStickersClient
+from asqlite import asqlite
 
 INTRO = """\
 Hi there! I'm a simple bot that converts Telegram stickers to Signal stickers and back.
@@ -29,8 +30,6 @@ async def main():
 	with open('config.toml') as f:
 		config = toml.load(f)
 
-	stickers_client = build_stickers_client(config)
-
 	from .telegram_bot import (
 		build_client as build_tg_client,
 		run as run_telegram,
@@ -40,14 +39,15 @@ async def main():
 		run as run_signal,
 	)
 
-	tg_client = build_tg_client(config, stickers_client)
-	if config['signal'].get('username'):
-		signal_client = build_signal_client(config, tg_client, stickers_client)
-
-	async with anyio.create_task_group() as tg:
-		await tg.spawn(run_telegram, tg_client)
+	async with asqlite.connect('db.sqlite3') as db, build_stickers_client(config) as stickers_client:
+		tg_client = build_tg_client(config, db, stickers_client)
 		if config['signal'].get('username'):
-			await tg.spawn(run_signal, signal_client)
+			signal_client = build_signal_client(config, db, tg_client, stickers_client)
+
+		async with anyio.create_task_group() as tg:
+			await tg.spawn(run_telegram, tg_client)
+			if config['signal'].get('username'):
+				await tg.spawn(run_signal, signal_client)
 
 if __name__ == '__main__':
 	anyio.run(main)
