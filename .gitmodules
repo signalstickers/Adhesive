@@ -1,3 +1,4 @@
 [submodule "asqlite"]
 	path = asqlite
-	url = https://github.com/Rapptz/asqlite.git
+	url = https://github.com/iomintz/asqlite.git
+	branch = origin/patch-1
