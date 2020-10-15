@@ -99,10 +99,10 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		signal_pack_url = f'https://signal.art/addstickers/#pack_id={row[0].hex()}&pack_key={row[1].hex()}'
 		raise ValueError('This sticker pack has already been converted as ' + signal_pack_url)
 
-	yield
-
 	if tg_pack.set.animated:
 		raise NotImplementedError('Animated packs are not supported yet.')
+
+	yield
 
 	signal_pack = signal_models.LocalStickerPack()
 	signal_pack.title = tg_pack.set.title
