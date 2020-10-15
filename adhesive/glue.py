@@ -54,7 +54,7 @@ def parse_link(link: str):
 	# TODO deduplicate this mess
 	try:
 		if parsed.scheme in ('http', 'https'):
-			if parsed.netloc == 't.me':
+			if parsed.netloc in ('t.me', 'telegram.dog'):
 				pack_info = (parsed.path.rpartition('/')[-1],)
 				converter = convert_to_signal
 			elif parsed.netloc == 'signal.art':
