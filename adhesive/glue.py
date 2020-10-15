@@ -188,7 +188,7 @@ async def convert_tgs_to_apng(data):
 	await anyio.run_sync_in_worker_thread(export_apng, anim, apng, limiter=THREAD_LIMITER)
 	return apng
 
-async def convert_to_telegram(tg_client, stickers_client, pack_id, pack_key):
+async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	# first make sure it's a valid sticker pack
 	try:
 		pack = await stickers_client.get_pack(pack_id, pack_key)
@@ -236,12 +236,6 @@ async def convert_signal_sticker(tg_client, signal_sticker):
 	)
 
 async def upload_document(tg_client, mime_type: str, data: bytes):
-	input_file = await tg_client.upload_file(data)
-	file = tl.types.InputMediaUploadedDocument(
-		file=input_file,
-		mime_type=mime_type,
-		attributes=[],
-	)
 	media = await tg_client(tl.functions.messages.UploadMediaRequest('me', await tg_client.upload_file(data)))
 	return telethon.utils.get_input_document(media)
 
