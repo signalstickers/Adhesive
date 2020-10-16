@@ -120,6 +120,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		"""
 		INSERT INTO packs (tg_hash, signal_pack_id, signal_pack_key)
 		VALUES (?, ?, ?)
+		ON CONFLICT DO NOTHING
 		""",
 		tg_pack.set.hash, bytes.fromhex(pack_id), bytes.fromhex(pack_key),
 	)
