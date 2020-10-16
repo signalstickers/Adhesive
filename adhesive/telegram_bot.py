@@ -34,7 +34,7 @@ async def convert(event):
 	async for response in convert_link_interactive(
 		event.client.db, event.client, event.client.stickers_client, event.message.message,
 	):
-		await event.reply(response)
+		await event.reply(response, link_preview=False)
 	raise events.StopPropagation
 
 def sticker_message_required(handler):
@@ -56,7 +56,7 @@ async def convert_sticker(event):
 	async for response in convert_pack_interactive(
 		event.client.db, event.client, event.client.stickers_client, convert_to_signal, event.sticker_set,
 	):
-		await event.reply(response)
+		await event.reply(response, link_preview=False)
 
 def build_client(config, db, stickers_client):
 	tg_config = config['telegram']
