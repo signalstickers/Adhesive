@@ -1,5 +1,6 @@
 import io
 import gzip
+import random
 import logging
 import urllib.parse
 
@@ -96,8 +97,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		tg_pack.set.hash,
 	)
 	if row:
-		signal_pack_url = f'https://signal.art/addstickers/#pack_id={row[0].hex()}&pack_key={row[1].hex()}'
-		raise ValueError('This sticker pack has already been converted as ' + signal_pack_url)
+		raise ValueError('This sticker pack has already been converted as ' + signal_pack_url(*row))
 
 	if tg_pack.set.animated:
 		raise NotImplementedError('Animated packs are not supported yet.')
@@ -107,7 +107,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 	signal_pack = signal_models.LocalStickerPack()
 	signal_pack.title = tg_pack.set.title
 	signal_pack.stickers = [None] * tg_pack.set.count
-	signal_pack.author = 'https://t.me/addstickers/' + tg_pack.set.short_name
+	signal_pack.author = telgram_pack_url(tg_pack.set.short_name)
 
 	if tg_pack.set.thumb is not None:
 		await download_tg_cover(tg_client, signal_pack, tg_pack)
@@ -124,7 +124,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		tg_pack.set.hash, bytes.fromhex(pack_id), bytes.fromhex(pack_key),
 	)
 
-	yield f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
+	yield signal_pack_url(pack_id, pack_key)
 
 async def download_tg_cover(tg_client, signal_pack, tg_pack):
 	signal_sticker = signal_models.Sticker()
@@ -206,7 +206,7 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	except telethon.errors.StickersetInvalidError:
 		pass
 	else:
-		raise ValueError('This sticker pack has been converted before as https://t.me/addstickers/' + tg_short_name)
+		raise ValueError('This sticker pack has been converted before as ' + telegram_pack_url(tg_short_name))
 
 	yield
 
@@ -227,7 +227,7 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 		),
 	))
 
-	yield 'https://t.me/addstickers/' + tg_pack.set.short_name
+	yield telegram_pack_url(tg_pack.set.short_name)
 
 async def convert_signal_sticker(tg_client, signal_sticker):
 	return tl.types.InputStickerSetItem(
@@ -238,6 +238,15 @@ async def convert_signal_sticker(tg_client, signal_sticker):
 async def upload_document(tg_client, mime_type: str, data: bytes):
 	media = await tg_client(tl.functions.messages.UploadMediaRequest('me', await tg_client.upload_file(data)))
 	return telethon.utils.get_input_document(media)
+
+def signal_pack_url(pack_id, pack_key):
+	if isinstance(pack_id, bytes): pack_id = pack_id.hex()
+	if isinstance(pack_key, bytes): pack_key = pack_key.hex()
+	return f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
+
+def telegram_pack_url(short_name):
+	domain = random.choices(('t.me', 'telegram.dog'), weights=(0.75, 0.25))[0]
+	return f'https://{domain}/addstickers/{short_name}'
 
 async def webp_to_png(image_data: bytes, *, thumbnail=False) -> bytes:
 	return await anyio.run_sync_in_worker_thread(_webp_to_png, image_data, thumbnail)
