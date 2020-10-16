@@ -107,7 +107,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 	signal_pack = signal_models.LocalStickerPack()
 	signal_pack.title = tg_pack.set.title
 	signal_pack.stickers = [None] * tg_pack.set.count
-	signal_pack.author = telgram_pack_url(tg_pack.set.short_name)
+	signal_pack.author = telegram_pack_url(tg_pack.set.short_name)
 
 	if tg_pack.set.thumb is not None:
 		await download_tg_cover(tg_client, signal_pack, tg_pack)
