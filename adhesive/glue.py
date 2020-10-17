@@ -215,18 +215,22 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	for sticker in pack.stickers:
 		stickers.append(await convert_signal_sticker(tg_client, sticker))
 
-	tg_pack = await tg_client(tl.functions.stickers.CreateStickerSetRequest(
-		# this user id can be anyone but it has to not be a bot
-		user_id='gnu_unix_grognard',
-		title=f'{pack.title} by {pack.author}',
-		short_name=tg_short_name,
-		stickers=stickers,
-		thumb=pack.cover and await upload_document(
-			tg_client,
-			'image/png',
-			await webp_to_png(pack.cover.image_data, thumbnail=True)
-		),
-	))
+	try:
+		tg_pack = await tg_client(tl.functions.stickers.CreateStickerSetRequest(
+			# this user id can be anyone but it has to not be a bot
+			user_id='gnu_unix_grognard',
+			title=f'{pack.title} by {pack.author}',
+			short_name=tg_short_name,
+			stickers=stickers,
+			thumb=pack.cover and await upload_document(
+				tg_client,
+				'image/png',
+				await webp_to_png(pack.cover.image_data, thumbnail=True)
+			),
+		))
+	except telethon.errors.rpcerrorlist.ShortnameOccupyFailedError:
+		# handle a race condition occurring when the same pack is sent to us to convert to signal twice
+		raise ValueError('This sticker pack has been converted before as ' + telegram_pack_url(tg_short_name))
 
 	yield telegram_pack_url(tg_pack.set.short_name)
 
