@@ -5,8 +5,8 @@ Adhesive is a simple bot which converts between Signal and Telegram sticker pack
 ![Screenshot of Adhesive (Telegram) in action](tg-screenshot.png)
 ![Screenshot of Adhesive (Signal) in action](signal-screenshot.png)
 
-A running Telegram instance is available: [@AdhesiveStickerBot](https://t.me/AdhesiveStickerBot).
-There's also a Signal bot but I'm running low on SIM cards so I don't have a dedicated phone number for it yet.
+A running Telegram instance is available: [@AdhesiveStickerBot](https://t.me/AdhesiveStickerBot).<br>
+There's also a Signal bot: +16692967337
 
 ## Installation
 
