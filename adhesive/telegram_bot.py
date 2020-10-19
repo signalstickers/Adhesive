@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import secrets
 import textwrap
 from functools import wraps
 
@@ -18,10 +19,23 @@ logging.getLogger('telethon.client.downloads').setLevel(logging.WARNING)
 
 # so that we can register them all in the correct order later (globals() is not guaranteed to be ordered)
 event_handlers = []
+
 def register_event(*args, **kwargs):
 	def deco(f):
-		event_handlers.append(events.register(*args, **kwargs)(f))
-		return f
+		@wraps(f)
+		async def handler(event):
+			try:
+				await f(event)
+			except Exception as exc:
+				ray_id = secrets.randbelow(2**64)
+				await event.reply(
+					'An internal error occurred while trying to run that command. '
+					f'Hey if you see the owner, give them this code okay? `{ray_id}`'
+				)
+				logger.error('Unhandled exception in %s (%s)', f.__name__, ray_id, exc_info=exc)
+
+		event_handlers.append(events.register(*args, **kwargs)(handler))
+		return handler
 	return deco
 
 @register_event(events.NewMessage(pattern=r'^/start'))

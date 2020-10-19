@@ -1,16 +1,35 @@
+import logging
+import secrets
+from functools import wraps
+
 import semaphore
 from semaphore import StopPropagation
 from .bot import INTRO, build_stickers_client
 from .glue import convert_link_interactive, convert_pack_interactive, convert_to_telegram
+
+logger = logging.getLogger(__name__)
 
 # Signal doesn't support markdown
 INTRO = INTRO.replace('`', '')
 
 handlers = []
 def handler(pattern):
-	def deco(func):
-		handlers.append((pattern, func))
-		return func
+	def deco(f):
+		@wraps(f)
+		async def handler(ctx):
+			try:
+				await f(ctx)
+			except Exception as exc:
+				ray_id = secrets.randbelow(2**64)
+				await ctx.message.reply(
+					'An internal error occurred while trying to run that command. '
+					f'Hey if you see the owner, give them this code okay? {ray_id}',
+					quote=True
+				)
+				logger.error('Unhandled exception in %s (%s)', f.__name__, ray_id, exc_info=exc)
+
+		handlers.append((pattern, handler))
+		return handler
 	return deco
 
 @handler(r'^/start')
