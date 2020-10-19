@@ -18,3 +18,8 @@ username = '+xxxxxxxxxxx'
 # username is NOT the same as your phone number
 username = '...'
 password = '...'
+
+# This is your API key for signalstickers.com
+# This is optional. If present, a button to submit your converted Signal sticker pack
+# to signalstickers.com will be displayed.
+signalstickers_api_token = '...'

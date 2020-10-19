@@ -19,6 +19,8 @@ def handler(pattern):
 		async def handler(ctx):
 			try:
 				await f(ctx)
+			except StopPropagation:
+				raise
 			except Exception as exc:
 				ray_id = secrets.randbelow(2**64)
 				await ctx.message.reply(

@@ -26,6 +26,8 @@ def register_event(*args, **kwargs):
 		async def handler(event):
 			try:
 				await f(event)
+			except events.StopPropagation:
+				raise
 			except Exception as exc:
 				ray_id = secrets.randbelow(2**64)
 				await event.reply(
