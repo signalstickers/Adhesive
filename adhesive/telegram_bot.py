@@ -194,9 +194,6 @@ async def maybe_enter_convo(event, is_link, response):
 					await button_ev.answer()
 					meta['nsfw'] = not meta['nsfw']
 
-				else:
-					print(chr(button_ev.data[0]))
-
 		except anyio.get_cancelled_exc_class():
 			await event.respond('Sorry, you took too long to respond. Send the pack again to start over.')
 			return
