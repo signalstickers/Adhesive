@@ -19,16 +19,18 @@ logger = logging.getLogger(__name__)
 
 THREAD_LIMITER = None
 
+# Yes, this is kind of a jank API. No, I don't really care :)
 async def convert_link_interactive(db, tg_client, stickers_client, link):
 	try:
 		converter, pack_info = parse_link(link)
 	except ValueError:
-		yield 'Invalid sticker pack link provided. Run /start for help.'
+		yield False, 'Invalid sticker pack link provided. Run /start for help.'
 		return
 
-	async for response in convert_pack_interactive(db, tg_client, stickers_client, converter, *pack_info):
-		yield response
+	async for is_link, message in convert_pack_interactive(db, tg_client, stickers_client, converter, *pack_info):
+		yield is_link, message
 
+IN_PROGRESS = object()
 
 async def convert_pack_interactive(db, tg_client, stickers_client, converter, *pack_info):
 	in_progress_message = (
@@ -38,17 +40,18 @@ async def convert_pack_interactive(db, tg_client, stickers_client, converter, *p
 
 	# This seems like a pretty strange thing to do. Allow me to explain.
 	# Converter functions are async generators which are expected to either raise an error,
-	# or yield. If they yield, then that means that all checks passed and the conversion
+	# or yield IN_PROGRESS. If they yield, then that means that all checks passed and the conversion
 	# has begun. The last thing they should yield is the resulting link.
+	started = False
 	try:
-		generator = converter(db, tg_client, stickers_client, *pack_info)
-		await generator.__anext__()
+		async for response in converter(db, tg_client, stickers_client, *pack_info):
+			if response is IN_PROGRESS:
+				started = True
+				yield False, in_progress_message
+			else:
+				yield response
 	except (ValueError, NotImplementedError) as exc:
-		yield exc.args[0]
-	else:
-		yield in_progress_message
-		converted_link = await generator.__anext__()
-		yield converted_link
+		yield False, exc.args[0]
 
 def parse_link(link: str):
 	parsed = urllib.parse.urlparse(link)
@@ -97,24 +100,25 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		tg_pack.set.hash,
 	)
 	if row:
-		raise ValueError('This sticker pack has already been converted as ' + signal_pack_url(*row))
+		yield True, (*row, tg_pack_url(tg_pack.set.short_name))
+		return
 
 	if tg_pack.set.animated:
 		raise NotImplementedError('Animated packs are not supported yet.')
 
-	yield
+	yield IN_PROGRESS
 
 	signal_pack = signal_models.LocalStickerPack()
 	signal_pack.title = tg_pack.set.title
 	signal_pack.stickers = [None] * tg_pack.set.count
-	signal_pack.author = telegram_pack_url(tg_pack.set.short_name)
+	signal_pack.author = tg_pack_url(tg_pack.set.short_name)
 
 	if tg_pack.set.thumb is not None:
 		await download_tg_cover(tg_client, signal_pack, tg_pack)
 	for i, tg_sticker in enumerate(tg_pack.documents):
 		await add_tg_sticker(tg_client, signal_pack, i, tg_sticker)
 
-	pack_id, pack_key = await stickers_client.upload_pack(signal_pack)
+	pack_info = list(map(bytes.fromhex, await stickers_client.upload_pack(signal_pack)))
 
 	await db.execute(
 		"""
@@ -122,10 +126,10 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		VALUES (?, ?, ?)
 		ON CONFLICT DO NOTHING
 		""",
-		tg_pack.set.hash, bytes.fromhex(pack_id), bytes.fromhex(pack_key),
+		tg_pack.set.hash, *pack_info,
 	)
 
-	yield signal_pack_url(pack_id, pack_key)
+	yield True, (*pack_info, tg_pack_url(tg_pack.set.short_name))
 
 async def download_tg_cover(tg_client, signal_pack, tg_pack):
 	signal_sticker = signal_models.Sticker()
@@ -207,9 +211,9 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	except telethon.errors.StickersetInvalidError:
 		pass
 	else:
-		raise ValueError('This sticker pack has been converted before as ' + telegram_pack_url(tg_short_name))
+		raise ValueError('This sticker pack has been converted before as ' + tg_pack_url(tg_short_name))
 
-	yield
+	yield IN_PROGRESS
 
 	# used to do this in parallel but that just caused a lot of rate-limiting
 	for sticker in pack.stickers:
@@ -230,9 +234,9 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 		))
 	except telethon.errors.rpcerrorlist.ShortnameOccupyFailedError:
 		# handle a race condition occurring when the same pack is sent to us to convert to signal twice
-		raise ValueError('This sticker pack has been converted before as ' + telegram_pack_url(tg_short_name))
+		raise ValueError('This sticker pack has been converted before as ' + tg_pack_url(tg_short_name))
 
-	yield telegram_pack_url(tg_pack.set.short_name)
+	yield True, tg_pack_url(tg_pack.set.short_name)
 
 async def convert_signal_sticker(tg_client, signal_sticker):
 	return tl.types.InputStickerSetItem(
@@ -249,7 +253,7 @@ def signal_pack_url(pack_id, pack_key):
 	if isinstance(pack_key, bytes): pack_key = pack_key.hex()
 	return f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
 
-def telegram_pack_url(short_name):
+def tg_pack_url(short_name):
 	domain = random.choices(('t.me', 'telegram.dog'), weights=(0.75, 0.25))[0]
 	return f'https://{domain}/addstickers/{short_name}'
 
@@ -267,3 +271,13 @@ def _webp_to_png(image_data: bytes, thumbnail=False) -> bytes:
 	im.save(out, format='PNG')
 	del input
 	return out.getvalue()
+
+async def propose_to_signalstickers_dot_com(http, metadata: dict, *, token, test_mode=False):
+	metadata['test_mode'] = test_mode
+	r = await http.post(
+		'https://api.signalstickers.com/propose',
+		json=metadata,
+		headers={'X-Auth-Token': token},
+		timeout=15,
+	)
+	return r.status_code, r.json()

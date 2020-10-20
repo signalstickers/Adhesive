@@ -6,6 +6,7 @@ api_id = 123
 api_hash = 'deadbeef'
 # get this from The BotFather
 api_token = '1234:deadbea7cafe'
+# this shouldn't need to be changed
 session_name = 'anon'
 
 [signal]
@@ -23,3 +24,5 @@ password = '...'
 # This is optional. If present, a button to submit your converted Signal sticker pack
 # to signalstickers.com will be displayed.
 signalstickers_api_token = '...'
+# whether to really propose sticker packs for realsies or to create PR branches but no PRs
+signalstickers_api_test_mode = true
