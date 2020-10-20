@@ -219,11 +219,17 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	for sticker in pack.stickers:
 		stickers.append(await convert_signal_sticker(tg_client, sticker))
 
+	title = f'{pack.title} by {pack.author}'
+	if len(title) > 64:
+		title = pack.title
+	if len(title) > 64:
+		title = textwrap.shorten(title, 64, placeholder=' …')
+
 	try:
 		tg_pack = await tg_client(tl.functions.stickers.CreateStickerSetRequest(
 			# this user id can be anyone but it has to not be a bot
 			user_id='gnu_unix_grognard',
-			title=f'{pack.title} by {pack.author}',
+			title=title,
 			short_name=tg_short_name,
 			stickers=stickers,
 			thumb=pack.cover and await upload_document(
