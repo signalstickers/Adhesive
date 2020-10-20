@@ -284,6 +284,6 @@ async def propose_to_signalstickers_dot_com(http, metadata: dict, *, token, test
 		'https://api.signalstickers.com/propose',
 		json=metadata,
 		headers={'X-Auth-Token': token},
-		timeout=15,
+		timeout=60,
 	)
 	return r.status_code, r.json()
