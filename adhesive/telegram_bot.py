@@ -25,7 +25,8 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 # this logger is a bit too noisy for my liking
-logging.getLogger('telethon.client.downloads').setLevel(logging.WARNING)
+for spammy_logger in 'telethon.client.downloads', 'telethon.client.uploads':
+	logging.getLogger(spammy_logger).setLevel(logging.WARNING)
 
 # so that we can register them all in the correct order later (globals() is not guaranteed to be ordered)
 event_handlers = []
