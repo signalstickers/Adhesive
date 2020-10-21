@@ -110,7 +110,7 @@ async def maybe_enter_convo(event, is_link, response):
 		orig_msg = await event.reply(url, buttons=buttons, link_preview=False)
 		try:
 			begin_ev = await t
-		except anyio.get_cancelled_exc_class():
+		except get_timeout_exc_class():
 			return
 		else:
 			async with anyio.create_task_group() as tg:
@@ -159,44 +159,49 @@ async def maybe_enter_convo(event, is_link, response):
 
 		first_loop = True
 
-		try:
-			while True:
-				t = convo.wait_event(
-					events.CallbackQuery(
-						func=lambda e: e.data[0] in b'tld' and e.data[1:] == data[1:]
-					),
-					timeout=timeout,
-				)
+		while True:
+			t = convo.wait_event(
+				events.CallbackQuery(
+					func=lambda e: e.data[0] in b'tld' and e.data[1:] == data[1:]
+				),
+				timeout=timeout,
+			)
 
-				if first_loop:
-					draft_msg = await convo.send_message(format_draft_message(), buttons=buttons)
-					first_loop = False
-				else:
-					with contextlib.suppress(telethon.errors.MessageNotModifiedError):
-						await draft_msg.edit(format_draft_message(), buttons=buttons)
+			if first_loop:
+				draft_msg = await convo.send_message(format_draft_message(), buttons=buttons)
+				first_loop = False
+			else:
+				with contextlib.suppress(telethon.errors.MessageNotModifiedError):
+					await draft_msg.edit(format_draft_message(), buttons=buttons)
 
+			try:
 				button_ev = await t
+			except get_timeout_exc_class():
+				await event.respond('Sorry, you took too long to respond. Send the pack again to start over.')
+				return
 
-				if button_ev.data[0] == ord(b'd'):
-					break
+			if button_ev.data[0] == ord(b'd'):
+				break
 
-				if button_ev.data[0] == ord(b't'):
-					await button_ev.answer()
-					t = convo.get_response(timeout=timeout)
-					tags_edit_msg = await convo.send_message('Enter some tags for your sticker pack, one per line.')
+			if button_ev.data[0] == ord(b't'):
+				await answer(button_ev)
+				t = convo.get_response(timeout=timeout)
+				tags_edit_msg = await convo.send_message('Enter some tags for your sticker pack, one per line.')
+
+				try:
 					msg = await t
-					meta['tags'] = msg.message.splitlines()
-					async with anyio.create_task_group() as tg:
-						await tg.spawn(msg.delete)
-						await tg.spawn(tags_edit_msg.delete)
+				except get_timeout_exc_class():
+					await event.respond('Sorry, you took too long to respond. Send the pack again to start over.')
+					return
 
-				elif button_ev.data[0] == ord(b'l'):
-					await button_ev.answer()
-					meta['nsfw'] = not meta['nsfw']
+				meta['tags'] = msg.message.splitlines()
+				async with anyio.create_task_group() as tg:
+					await tg.spawn(msg.delete)
+					await tg.spawn(tags_edit_msg.delete)
 
-		except anyio.get_cancelled_exc_class():
-			await event.respond('Sorry, you took too long to respond. Send the pack again to start over.')
-			return
+			elif button_ev.data[0] == ord(b'l'):
+				await answer(button_ev)
+				meta['nsfw'] = not meta['nsfw']
 
 		status_code, data = await propose_to_signalstickers_dot_com(
 			event.client.http,
@@ -205,7 +210,7 @@ async def maybe_enter_convo(event, is_link, response):
 			# TODO use log levels for this i guess
 			test_mode=event.client.config['signal']['stickers'].get('signalstickers_api_test_mode', False),
 		)
-		await button_ev.answer()
+		await answer(button_ev)
 		await draft_msg.delete()
 		if status_code not in range(200, 300):
 			await event.reply(
@@ -220,6 +225,27 @@ async def maybe_enter_convo(event, is_link, response):
 				"or if you don't, you can DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
 				link_preview=False,
 			)
+
+async def answer(ev):
+	# this error is raised when it's too late to answer the event
+	with contextlib.suppress(telethon.errors.QueryIdInvalidError):
+		await ev.answer()
+
+def get_timeout_exc_class():
+	import sniffio
+	backend = sniffio.current_async_library()
+	# lazy imports in case any of them are not installed
+	if backend == 'asyncio':
+		import asyncio
+		return asyncio.TimeoutError
+	if backend == 'curio':
+		import curio
+		return curio.TimeoutCancellationError
+	if backend == 'trio':
+		import trio
+		return trio.TooSlowError
+
+	raise AssertionError('unexpected async library', backend)
 
 def build_client(config, db, stickers_client):
 	tg_config = config['telegram']
