@@ -95,7 +95,7 @@ async def maybe_enter_convo(event, is_link, response):
 	url = signal_pack_url(pack_id, pack_key)
 
 	if not event.client.config['signal'].get('stickers', {}).get('signalstickers_api_key'):
-		await event.reply(url)
+		await event.reply(url, link_preview=False)
 		return
 
 	# 'p' for 'propose'
