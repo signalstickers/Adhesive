@@ -41,7 +41,7 @@ async def intro(ctx):
 
 @handler(r'^(https?|sgnl|tg)://')
 async def convert(ctx):
-	async for response in convert_link_interactive(
+	async for _, response in convert_link_interactive(
 		ctx.bot.db,
 		ctx.bot.tg_client,
 		ctx.bot.stickers_client,
@@ -56,7 +56,7 @@ async def convert_sticker(ctx):
 	sticker = ctx.message.get_sticker()
 	if sticker is None:
 		return
-	async for response in convert_pack_interactive(
+	async for _, response in convert_pack_interactive(
 		ctx.bot.db,
 		ctx.bot.tg_client,
 		ctx.bot.stickers_client,
