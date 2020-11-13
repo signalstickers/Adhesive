@@ -67,7 +67,10 @@ async def convert_sticker(ctx):
 		await ctx.message.reply(response, quote=True)
 
 def build_client(config, db, tg_client, stickers_client):
-	bot = semaphore.Bot(config['signal']['username'])
+	bot = semaphore.Bot(
+		config['signal']['username'],
+		socket_path=config['signal'].get('signald_socket_path', '/var/run/signald/signald.sock'),
+	)
 	bot.tg_client = tg_client
 	bot.db = db
 	bot.stickers_client = stickers_client

@@ -13,6 +13,8 @@ session_name = 'anon'
 # signal phone number that you have registered with signald
 # if this is not set, the signal bot will not run but everything else will function normally
 username = '+xxxxxxxxxxx'
+# update this if you're running signald as a user service or in a nonstandard location
+signald_socket_path = '/var/run/signald/signald.sock'
 
 [signal.stickers]
 # get these by running `python -m adhesive.signal_auth`
