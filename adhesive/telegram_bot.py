@@ -127,8 +127,10 @@ async def maybe_enter_convo(event, is_link, response):
 			animated=False,
 		)
 
+		# XXX instead of all this memory allocation,
+		# just use static values and check the event against the conversation...
 		buttons = [
-			# display the first two on row one…
+			# display the data editing buttons on row one...
 			[
 				telethon.Button.inline(
 					'Edit tags',
@@ -138,7 +140,7 @@ async def maybe_enter_convo(event, is_link, response):
 					# 'l' for 'lewd'
 					data=b'l' + data[1:],
 				),
-			# …and the last one on its own row
+			# ...and the last one on its own row
 			], [telethon.Button.inline(
 				'Done (propose this to signalstickers.com)',
 				data=b'd' + data[1:],
@@ -160,6 +162,8 @@ async def maybe_enter_convo(event, is_link, response):
 		first_loop = True
 
 		while True:
+			# TODO add a /cancel command or Cancel button.
+			# Not sure how to do that in a way that works at every point in the control flow though.
 			t = convo.wait_event(
 				events.CallbackQuery(
 					func=lambda e: e.data[0] in b'tld' and e.data[1:] == data[1:]
@@ -177,41 +181,50 @@ async def maybe_enter_convo(event, is_link, response):
 			try:
 				button_ev = await t
 			except get_timeout_exc_class():
+				await draft_msg.edit(buttons=None)
 				await event.respond('Sorry, you took too long to respond. Send the pack again to start over.')
 				return
+
+			# TODO maybe make an event dispatching library. for now, all this local state will suffice.
 
 			if button_ev.data[0] == ord(b'd'):
 				break
 
-			if button_ev.data[0] == ord(b't'):
+			elif button_ev.data[0] == ord(b't'):
 				await answer(button_ev)
 				t = convo.get_response(timeout=timeout)
 				tags_edit_msg = await convo.send_message('Enter some tags for your sticker pack, one per line.')
 
 				try:
-					msg = await t
+					user_msg = await t
 				except get_timeout_exc_class():
+					await draft_msg.edit(buttons=None)
 					await event.respond('Sorry, you took too long to respond. Send the pack again to start over.')
 					return
 
-				meta['tags'] = msg.message.splitlines()
+				meta['tags'] = user_msg.message.splitlines()
 				async with anyio.create_task_group() as tg:
-					await tg.spawn(msg.delete)
+					await tg.spawn(user_msg.delete)
 					await tg.spawn(tags_edit_msg.delete)
 
 			elif button_ev.data[0] == ord(b'l'):
 				await answer(button_ev)
 				meta['nsfw'] = not meta['nsfw']
 
+		await answer(button_ev)
+		processing_message = await event.respond('Submitting…')
 		status_code, data = await propose_to_signalstickers_dot_com(
 			event.client.http,
 			meta,
 			token=event.client.config['signal']['stickers']['signalstickers_api_key'],
-			# TODO use log levels for this i guess
+			# TODO use configured log levels for this i guess
 			test_mode=event.client.config['signal']['stickers'].get('signalstickers_api_test_mode', False),
 		)
-		await answer(button_ev)
-		await draft_msg.delete()
+
+		async with anyio.create_task_group() as tg:
+			await tg.spawn(partial(draft_msg.edit, buttons=None))
+			await tg.spawn(processing_message.delete)
+
 		if status_code not in range(200, 300):
 			await event.reply(
 				"Ruh roh. Looks like we got an error from signalstickers.com. Here's what they said: "
