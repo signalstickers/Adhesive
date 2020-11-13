@@ -78,5 +78,14 @@ def build_client(config, db, tg_client, stickers_client):
 	return bot
 
 async def run(signal_client):
-	async with signal_client as bot:
-		await bot.start()
+	try:
+		async with signal_client as bot:
+			await bot.start()
+	except FileNotFoundError:
+		import sys
+		logger.fatal(
+			'Signal bot was configured but signald is not running. '
+			'Please ensure signald is running or else disable the Signal bot '
+			'by removing the signal.username key from the config file.'
+		)
+		sys.exit(1)
