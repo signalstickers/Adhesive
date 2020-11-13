@@ -1,4 +1,7 @@
 source_code_url = 'https://github.com/iomintz/Adhesive'
+# one of 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
+# defaults to 'INFO'
+log_level = 'INFO'
 
 [telegram]
 # access api_id and api_hash at https://my.telegram.org/apps

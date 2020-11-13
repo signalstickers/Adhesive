@@ -23,12 +23,20 @@ def build_stickers_client(config):
 	)
 
 async def main():
-	import logging
-	logging.basicConfig(level=logging.INFO)
-
 	import toml
 	with open('config.toml') as f:
 		config = toml.load(f)
+
+	import logging
+	# shockingly, this is really how the docs want you doing it
+	log_level = getattr(logging, config.get('log_level', 'INFO').upper(), None)
+	if not isinstance(log_level, int):
+		import sys
+		logging.basicConfig(level=logging.ERROR)
+		logging.error('Invalid log level %s specified!', log_level)
+		sys.exit(1)
+
+	logging.basicConfig(level=log_level)
 
 	from .telegram_bot import (
 		build_client as build_tg_client,
