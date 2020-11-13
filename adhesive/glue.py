@@ -28,6 +28,7 @@ async def convert_link_interactive(db, tg_client, stickers_client, link):
 		return
 
 	async for is_link, message in convert_pack_interactive(db, tg_client, stickers_client, converter, *pack_info):
+		logger.debug('convert_link_interactive: %r', message)
 		yield is_link, message
 
 IN_PROGRESS = object()
@@ -196,13 +197,13 @@ async def convert_tgs_to_apng(data):
 async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	# first make sure it's a valid sticker pack
 	try:
-		pack = await stickers_client.get_pack(pack_id, pack_key)
+		pack = await stickers_client.get_pack_metadata(pack_id, pack_key)
 	except Exception:
 		raise ValueError('Sticker pack not found.')
 
 	stickers = []
 
-	# then make sure we haven't already converted this one
+	# make sure we haven't already converted this one
 	# this _by_<bot username> suffix is mandatory
 	tg_short_name = f'signal_{pack_id}_by_{tg_client.user.username}'
 
@@ -214,6 +215,14 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 		raise ValueError('This sticker pack has been converted before as ' + tg_pack_url(tg_short_name))
 
 	yield IN_PROGRESS
+
+	async def download_sticker(sticker):
+		sticker.image_data = await stickers_client.download_sticker(sticker.id, pack_id, pack_key)
+
+	async with anyio.create_task_group() as tg:
+		await tg.spawn(download_sticker, pack.cover)
+		for sticker in pack.stickers:
+			await tg.spawn(download_sticker, sticker)
 
 	# used to do this in parallel but that just caused a lot of rate-limiting
 	for sticker in pack.stickers:

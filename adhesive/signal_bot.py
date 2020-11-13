@@ -5,7 +5,7 @@ from functools import wraps
 import semaphore
 from semaphore import StopPropagation
 from .bot import INTRO, build_stickers_client
-from .glue import convert_link_interactive, convert_pack_interactive, convert_to_telegram
+from .glue import convert_link_interactive, convert_pack_interactive, convert_to_telegram, signal_pack_url
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +41,17 @@ async def intro(ctx):
 
 @handler(r'^(https?|sgnl|tg)://')
 async def convert(ctx):
+	await ctx.message.mark_read()
 	async for _, response in convert_link_interactive(
 		ctx.bot.db,
 		ctx.bot.tg_client,
 		ctx.bot.stickers_client,
 		ctx.message.get_body(),
 	):
-		await ctx.message.reply(response, quote=True)
+		if isinstance(response, tuple):
+			await ctx.message.reply(signal_pack_url(*response[:2]), quote=True)
+		else:
+			await ctx.message.reply(response, quote=True)
 
 	raise StopPropagation
 
@@ -56,6 +60,7 @@ async def convert_sticker(ctx):
 	sticker = ctx.message.get_sticker()
 	if sticker is None:
 		return
+	await ctx.message.mark_read()
 	async for _, response in convert_pack_interactive(
 		ctx.bot.db,
 		ctx.bot.tg_client,
