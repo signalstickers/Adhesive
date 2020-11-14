@@ -228,7 +228,9 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	for sticker in pack.stickers:
 		stickers.append(await convert_signal_sticker(tg_client, sticker))
 
-	title = f'{pack.title} by {pack.author}'
+	title = pack.title
+	if pack.author:
+		title += f' by {pack.author}'
 	if len(title) > 64:
 		title = pack.title
 	if len(title) > 64:
