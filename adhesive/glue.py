@@ -246,10 +246,10 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 			thumb=pack.cover and await upload_document(
 				tg_client,
 				'image/png',
-				await webp_to_png(pack.cover.image_data, thumbnail=True)
+				await img_to_png(pack.cover.image_data, thumbnail=True)
 			),
 		))
-	except telethon.errors.rpcerrorlist.ShortnameOccupyFailedError:
+	except telethon.errors.ShortnameOccupyFailedError:
 		# handle a race condition occurring when the same pack is sent to us to convert to signal twice
 		raise ValueError('This sticker pack has been converted before as ' + tg_pack_url(tg_short_name))
 
@@ -257,7 +257,7 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 
 async def convert_signal_sticker(tg_client, signal_sticker):
 	return tl.types.InputStickerSetItem(
-		document=await upload_document(tg_client, 'image/png', await webp_to_png(signal_sticker.image_data)),
+		document=await upload_document(tg_client, 'image/png', await img_to_png(signal_sticker.image_data)),
 		emoji=signal_sticker.emoji,
 	)
 
@@ -274,10 +274,10 @@ def tg_pack_url(short_name):
 	domain = random.choices(('t.me', 'telegram.dog'), weights=(0.75, 0.25))[0]
 	return f'https://{domain}/addstickers/{short_name}'
 
-async def webp_to_png(image_data: bytes, *, thumbnail=False) -> bytes:
-	return await anyio.run_sync_in_worker_thread(_webp_to_png, image_data, thumbnail)
+async def img_to_png(image_data: bytes, *, thumbnail=False) -> bytes:
+	return await anyio.run_sync_in_worker_thread(_img_to_png, image_data, thumbnail)
 
-def _webp_to_png(image_data: bytes, thumbnail=False) -> bytes:
+def _img_to_png(image_data: bytes, thumbnail=False) -> bytes:
 	input = io.BytesIO(image_data)
 	input.seek(0)
 	im = PIL.Image.open(input)
