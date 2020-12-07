@@ -36,7 +36,7 @@ IN_PROGRESS = object()
 async def convert_pack_interactive(db, tg_client, stickers_client, converter, *pack_info):
 	in_progress_message = (
 		f'Converting this pack to {"Signal" if converter is convert_to_signal else "Telegram"}. '
-		'Hold on to your butts…'
+		'Hold on tight…'
 	)
 
 	# This seems like a pretty strange thing to do. Allow me to explain.
