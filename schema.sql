@@ -9,3 +9,5 @@ CREATE TABLE packs (
 	-- UTC seconds since 1970 without leap seconds
 	converted_at INTEGER NOT NULL DEFAULT (cast(strftime('%s', 'now') AS INT))
 );
+
+CREATE INDEX old_pack_idx ON packs (converted_at) ASC;
