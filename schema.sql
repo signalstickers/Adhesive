@@ -7,5 +7,5 @@ CREATE TABLE packs (
 	signal_pack_key BLOB NOT NULL,
 	-- for timed deletion
 	-- UTC seconds since 1970 without leap seconds
-	converted_at INTEGER NOT NULL DEFAULT cast(strftime('%s', 'now') AS INT)
+	converted_at INTEGER NOT NULL DEFAULT (cast(strftime('%s', 'now') AS INT))
 );
