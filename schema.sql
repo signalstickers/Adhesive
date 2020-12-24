@@ -10,4 +10,4 @@ CREATE TABLE packs (
 	converted_at INTEGER NOT NULL DEFAULT (cast(strftime('%s', 'now') AS INT))
 );
 
-CREATE INDEX old_pack_idx ON packs (converted_at) ASC;
+CREATE INDEX old_pack_idx ON packs (converted_at);
