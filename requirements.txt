@@ -1,21 +1,20 @@
 # assume all deps use semver, tighten otherwise
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
-toml>=0.10.1,<0.11.0
+toml ~= 0.10
 
 # for converting Telegram animated stickers to animated PNG
 #lottie>=0.6.6,<0.7.0
 #apng>=0.3.4,<0.4.0
 
 # for converting Signal stickers from WEBP to PNG
-Pillow-SIMD>=7.0.0,<8.0.0
+Pillow-SIMD ~= 7.0
 
 # telegram bot deps
-telethon>=1.16.4,<2.0.0
+telethon ~= 1.0
 
 # signal deps
-# temporary: change back to sqlcipher3-binary when that supports 3.9
-sqlcipher3>=0.4.2,<0.5.0
-signalstickers-client>=3.0.0,<4.0.0
-httpx>=0.16.0,<0.17.0
-semaphore-bot>=0.8.0,<0.9.0
+sqlcipher3-binary ~= 0.4
+signalstickers-client ~= 3.0
+httpx ~= 0.16
+semaphore-bot ~= 0.9
