@@ -292,7 +292,7 @@ def _img_to_png(image_data: bytes, thumbnail=False) -> bytes:
 async def propose_to_signalstickers_dot_com(http, metadata: dict, *, token, test_mode=False):
 	metadata['test_mode'] = test_mode
 	r = await http.post(
-		'https://api.signalstickers.com/pack/propose',
+		'https://api-v1.signalstickers.com/pack/propose',
 		json=metadata,
 		headers={'X-Auth-Token': token},
 		timeout=60,
