@@ -114,7 +114,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 	signal_pack.stickers = [None] * tg_pack.set.count
 	signal_pack.author = tg_pack_url(tg_pack.set.short_name)
 
-	if tg_pack.set.thumb is not None:
+	if hasattr(tg_pack.set, 'thumb') and tg_pack.set.thumb is not None:
 		await download_tg_cover(tg_client, signal_pack, tg_pack)
 	for i, tg_sticker in enumerate(tg_pack.documents):
 		await add_tg_sticker(tg_client, signal_pack, i, tg_sticker)
