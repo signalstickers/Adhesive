@@ -141,7 +141,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		VALUES (?, ?, ?)
 		ON CONFLICT DO NOTHING
 		""",
-		tg_pack.set.hash, *pack_info,
+		tg_pack.set.hash, *map(bytes.fromhex, pack_info),
 	)
 
 	yield True, (*pack_info, tg_pack_url(tg_pack.set.short_name))
