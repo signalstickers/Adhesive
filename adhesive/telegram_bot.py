@@ -34,6 +34,7 @@ event_handlers = []
 
 def register_event(*args, **kwargs):
 	def deco(f):
+		@events.register(*args, **kwargs)
 		@wraps(f)
 		async def handler(event):
 			try:
@@ -48,7 +49,7 @@ def register_event(*args, **kwargs):
 				)
 				logger.error('Unhandled exception in %s (%s)', f.__name__, ray_id, exc_info=exc)
 
-		event_handlers.append(events.register(*args, **kwargs)(handler))
+		event_handlers.append(handler)
 		return handler
 	return deco
 
