@@ -100,14 +100,15 @@ async def maybe_enter_convo(event, is_link, response):
 		await event.reply(url, link_preview=False)
 		return
 
+	convo_id = random.randbytes(8)
 	# 'p' for 'propose'
-	data = b'p' + b''.join(response[:2])
+	data = b'p' + convo_id
 	orig_link = response[-1]
 	buttons = [telethon.Button.inline('Propose to signalstickers.com', data=data)]
 
 	timeout = 5 * 60
 
-	async with event.client.conversation(event.sender.id) as convo:
+	async with event.client.conversation(event.chat_id, exclusive=False) as convo:
 		t = convo.wait_event(events.CallbackQuery(func=lambda e: e.data == data), timeout=timeout)
 		orig_msg = await event.reply(url, buttons=buttons, link_preview=False)
 		try:
@@ -136,16 +137,16 @@ async def maybe_enter_convo(event, is_link, response):
 			[
 				telethon.Button.inline(
 					'Edit tags',
-					data=b't' + data[1:],
+					data=b't' + convo_id,
 				), telethon.Button.inline(
 					'Toggle NSFW',
 					# 'l' for 'lewd'
-					data=b'l' + data[1:],
+					data=b'l' + convo_id,
 				),
 			# ...and the last one on its own row
 			], [telethon.Button.inline(
 				'Done (propose this to signalstickers.com)',
-				data=b'd' + data[1:],
+				data=b'd' + convo_id,
 			)],
 		]
 
@@ -168,7 +169,7 @@ async def maybe_enter_convo(event, is_link, response):
 			# Not sure how to do that in a way that works at every point in the control flow though.
 			t = convo.wait_event(
 				events.CallbackQuery(
-					func=lambda e: e.data[0] in b'tld' and e.data[1:] == data[1:]
+					func=lambda e: e.data[0] in b'tld' and e.data[1:] == convo_id
 				),
 				timeout=timeout,
 			)

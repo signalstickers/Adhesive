@@ -1,7 +1,7 @@
 # assume all deps use semver, tighten otherwise
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
-toml ~= 0.10
+toml ~= 0.10.0
 humanize ~= 3.0
 
 # for converting Telegram animated stickers to animated PNG
