@@ -18,4 +18,4 @@ telethon ~= 1.0
 sqlcipher3-binary ~= 0.4
 signalstickers-client @ git+https://github.com/iomintz/signalstickers-client@pr/improve-exceptions
 httpx ~= 0.16
-semaphore-bot ~= 0.9
+semaphore-bot ~= 0.10.0

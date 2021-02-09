@@ -1,6 +1,7 @@
 import logging
 import secrets
 from functools import wraps
+from pathlib import Path
 
 import semaphore
 from semaphore import StopPropagation
@@ -75,6 +76,8 @@ def build_client(config, db, tg_client, stickers_client):
 	bot = semaphore.Bot(
 		config['signal']['username'],
 		socket_path=config['signal'].get('signald_socket_path', '/var/run/signald/signald.sock'),
+		profile_name='Adhesive',
+		profile_picture=str((Path(__file__).parent.parent / 'profile-pic.png').absolute()),
 	)
 	bot.tg_client = tg_client
 	bot.db = db
