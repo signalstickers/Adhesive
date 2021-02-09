@@ -11,3 +11,9 @@ CREATE TABLE packs (
 );
 
 CREATE INDEX old_pack_idx ON packs (converted_at);
+
+CREATE TABLE signal_accounts (
+	account_id TEXT PRIMARY KEY,
+	space_remaining INTEGER NOT NULL,
+	last_updated_at DOUBLE NOT NULL
+);

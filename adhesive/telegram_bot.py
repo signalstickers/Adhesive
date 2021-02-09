@@ -3,6 +3,7 @@
 import contextlib
 import secrets
 import textwrap
+import random
 from functools import wraps, partial
 
 import anyio
@@ -19,12 +20,12 @@ from .glue import (
 	signal_pack_url,
 	propose_to_signalstickers_dot_com,
 )
-from .bot import INTRO, build_stickers_client
+from .bot import INTRO
 
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-# this logger is a bit too noisy for my liking
+# these loggers are a bit too noisy for my liking
 for spammy_logger in 'telethon.client.downloads', 'telethon.client.uploads':
 	logging.getLogger(spammy_logger).setLevel(logging.WARNING)
 
@@ -91,7 +92,7 @@ async def maybe_enter_convo(event, is_link, response):
 		await event.reply(response, link_preview=False)
 		return
 
-	pack_id, pack_key = map(bytes.hex, response[:2])
+	pack_id, pack_key = response[:2]
 	url = signal_pack_url(pack_id, pack_key)
 
 	if not event.client.config['signal'].get('stickers', {}).get('signalstickers_api_key'):

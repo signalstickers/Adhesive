@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import anyio
-from signalstickers_client import StickersClient as SignalStickersClient
+from .stickers_client import MultiStickersClient, CREATE_PACK_RL
 from asqlite import asqlite
 
 INTRO = """\
@@ -16,11 +16,21 @@ You can also just send me a sticker and I'll convert the pack that it's from.
 This bot is open-source software under the terms of the AGPLv3 license. You can find the source code at:
 """
 
-def build_stickers_client(config):
-	return SignalStickersClient(
-		config['signal']['stickers']['username'],
-		config['signal']['stickers']['password'],
-	)
+async def build_stickers_client(db, config):
+	accounts = config['signal']['stickers']['accounts']
+	buckets = []
+	for account in accounts:
+		row = await db.fetchone(
+			'SELECT space_remaining, last_updated_at FROM signal_accounts WHERE account_id = ?',
+			(account['username'],)
+		)
+		if row is None:
+			buckets.append(None)
+			continue
+		buckets.append(
+			CREATE_PACK_RL.new(space_remaining=row['space_remaining'], last_updated_at=row['last_updated_at'])
+		)
+	return MultiStickersClient(db, accounts, buckets)
 
 async def main():
 	import toml
@@ -47,7 +57,7 @@ async def main():
 		run as run_signal,
 	)
 
-	async with asqlite.connect('db.sqlite3') as db, build_stickers_client(config) as stickers_client:
+	async with asqlite.connect('db.sqlite3') as db, await build_stickers_client(db, config) as stickers_client:
 		tg_client = build_tg_client(config, db, stickers_client)
 		if config['signal'].get('username'):
 			signal_client = build_signal_client(config, db, tg_client, stickers_client)

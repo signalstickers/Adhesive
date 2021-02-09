@@ -2,6 +2,7 @@
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
 toml ~= 0.10
+humanize ~= 3.0
 
 # for converting Telegram animated stickers to animated PNG
 #lottie>=0.6.6,<0.7.0
@@ -15,6 +16,6 @@ telethon ~= 1.0
 
 # signal deps
 sqlcipher3-binary ~= 0.4
-signalstickers-client ~= 3.0
+signalstickers-client @ git+https://github.com/iomintz/signalstickers-client@pr/improve-exceptions
 httpx ~= 0.16
 semaphore-bot ~= 0.9

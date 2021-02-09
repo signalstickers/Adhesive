@@ -5,13 +5,15 @@ import logging
 import urllib.parse
 
 import anyio
+import humanize
 import telethon.utils
 import telethon.errors
 from signalstickers_client import models as signal_models
 #from lottie.importers.core import import_tgs
 from telethon import tl
-
 import PIL.Image
+
+from .stickers_client import RateLimited, ServerRateLimited
 
 #from .apng import export_apng
 
@@ -51,7 +53,7 @@ async def convert_pack_interactive(db, tg_client, stickers_client, converter, *p
 				yield False, in_progress_message
 			else:
 				yield response
-	except (ValueError, NotImplementedError) as exc:
+	except (ValueError, NotImplementedError, RateLimited) as exc:
 		yield False, exc.args[0]
 
 def parse_link(link: str):
@@ -83,6 +85,13 @@ def parse_link(link: str):
 	return converter, pack_info
 
 async def convert_to_signal(db, tg_client, stickers_client, pack):
+	rl_wait = stickers_client.get_min_wait_time()
+	if rl_wait:
+		raise RateLimited(
+			"Signal told me to slow down. Looks like I've been a bit too popular lately 🥴\n"
+			f"Try again in about {humanize.naturaltime(stickers_client.get_min_wait_time(), future=True)}."
+		)
+
 	if isinstance(pack, str):
 		input_sticker_set = tl.types.InputStickerSetShortName(short_name=pack)
 	else:
@@ -118,7 +127,13 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 	for i, tg_sticker in enumerate(tg_pack.documents):
 		await add_tg_sticker(tg_client, signal_pack, i, tg_sticker)
 
-	pack_info = list(map(bytes.fromhex, await stickers_client.upload_pack(signal_pack)))
+	try:
+		pack_info = await stickers_client.upload_pack(signal_pack)
+	except (RateLimited, ServerRateLimited):
+		raise RateLimited(
+			"Signal told me to slow down. Looks like I've been a bit too popular lately 🥴\n"
+			f"Try again in about {humanize.naturaltime(stickers_client.get_min_wait_time(), future=True)}."
+		)
 
 	await db.execute(
 		"""

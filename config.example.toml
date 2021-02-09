@@ -19,12 +19,21 @@ username = '+xxxxxxxxxxx'
 # update this if you're running signald as a user service or in a nonstandard location
 signald_socket_path = '/var/run/signald/signald.sock'
 
-[signal.stickers]
-# get these by running `python -m adhesive.signal_auth`
+[[signal.stickers.accounts]]
+# get these by running `python -m adhesive.signal_auth`,
+# or by evaluating `window.reduxStore.getState().items.uuid_id` and `window.reduxStore.getState().items.password`
+# in the Signal Desktop developer tools console (Ctrl+Shift+I)
 # username is NOT the same as your phone number
 username = '...'
 password = '...'
 
+# You will need more than one account if you want to let people create more than 20 Signal packs per day.
+# You can add more like this:
+[[signal.stickers.accounts]]
+username = '...'  # second username
+password = '...'  # second password
+
+[signal.stickers]
 # This is your API key for signalstickers.com
 # This is optional. If present, a button to submit your converted Signal sticker pack
 # to signalstickers.com will be displayed.
