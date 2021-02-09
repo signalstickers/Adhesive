@@ -15,7 +15,7 @@ Pillow-SIMD ~= 7.0
 telethon ~= 1.0
 
 # signal deps
-sqlcipher3-binary ~= 0.4
+sqlcipher3-binary ~= 0.4.0
 signalstickers-client @ git+https://github.com/iomintz/signalstickers-client@pr/improve-exceptions
-httpx ~= 0.16
+httpx ~= 0.16.0
 semaphore-bot ~= 0.10.0
