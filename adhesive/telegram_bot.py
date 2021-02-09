@@ -100,7 +100,7 @@ async def maybe_enter_convo(event, is_link, response):
 		await event.reply(url, link_preview=False)
 		return
 
-	convo_id = random.randbytes(8)
+	convo_id = random.randrange(2**64).to_bytes(8, byteorder='big')
 	# 'p' for 'propose'
 	data = b'p' + convo_id
 	orig_link = response[-1]
