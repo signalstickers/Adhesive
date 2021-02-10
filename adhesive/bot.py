@@ -17,20 +17,17 @@ This bot is open-source software under the terms of the AGPLv3 license. You can 
 """
 
 async def build_stickers_client(db, config):
-	accounts = config['signal']['stickers']['accounts']
-	buckets = []
-	for account in accounts:
-		row = await db.fetchone(
-			'SELECT space_remaining, last_updated_at FROM signal_accounts WHERE account_id = ?',
-			(account['username'],)
-		)
-		if row is None:
-			buckets.append(None)
+	accounts = {account['username']: account for account in config['signal']['stickers']['accounts']}
+	bucket_rows = await db.fetchall('SELECT account_id, space_remaining, last_updated_at FROM signal_accounts')
+	for row in bucket_rows:
+		row = dict(row)
+		username = row.pop('account_id')
+		try:
+			accounts[username]['bucket'] = CREATE_PACK_RL.new(**row)
+		except KeyError:
 			continue
-		buckets.append(
-			CREATE_PACK_RL.new(space_remaining=row['space_remaining'], last_updated_at=row['last_updated_at'])
-		)
-	return MultiStickersClient(db, accounts, buckets)
+
+	return MultiStickersClient(db, accounts.values())
 
 async def main():
 	import toml

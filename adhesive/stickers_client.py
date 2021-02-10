@@ -10,6 +10,7 @@ from signalstickers_client.utils.ca import CACERT_PATH
 from signalstickers_client.errors import RateLimited as ServerRateLimited
 
 from .leaky_bucket import LeakyBucketConfig, LeakyBucket
+from .utils import starstarmap
 
 logger = logging.getLogger(__name__)
 
@@ -30,18 +31,11 @@ class Account:
 			self.bucket = bucket
 
 class MultiStickersClient:
-	def __init__(self, db, accounts, buckets=()):
+	def __init__(self, db, accounts):
 		self.db = db
 		self.http: httpx.AsyncClient
 
-		if not buckets:
-			buckets = itertools.repeat(None)
-		elif len(buckets) != len(accounts):
-			raise ValueError('Buckets must either be empty or correspond to accounts')
-
-		self.accounts = accs = []
-		for account_config, bucket in zip(accounts, buckets):
-			accs.append(Account(account_config['username'], account_config['password'], bucket))
+		self.accounts = list(starstarmap(Account, accounts))
 
 	async def __aenter__(self) -> 'MultiStickersClient':
 		self.http = await httpx.AsyncClient(verify=CACERT_PATH).__aenter__()
