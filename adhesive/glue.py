@@ -110,7 +110,7 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 		tg_pack.set.hash,
 	)
 	if row:
-		yield True, (*row, tg_pack_url(tg_pack.set.short_name))
+		yield True, (*map(bytes.hex, row), tg_pack_url(tg_pack.set.short_name))
 		return
 
 	if tg_pack.set.animated:
