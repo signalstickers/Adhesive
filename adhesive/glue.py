@@ -303,7 +303,7 @@ def signal_pack_url(pack_id, pack_key):
 	return f'https://signal.art/addstickers/#pack_id={pack_id}&pack_key={pack_key}'
 
 def tg_pack_url(short_name):
-	domain = random.choices(('t.me', 'telegram.dog'), weights=(0.75, 0.25))[0]
+	domain = random.choices(('t.me', 'telegram.dog'), weights=(0.875, 0.125))[0]
 	return f'https://{domain}/addstickers/{short_name}'
 
 async def img_to_png(image_data: bytes, *, thumbnail=False) -> bytes:
