@@ -1,4 +1,0 @@
-[submodule "asqlite"]
-	path = asqlite
-	url = https://github.com/iomintz/asqlite.git
-	branch = origin/patch-1

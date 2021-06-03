@@ -2,7 +2,7 @@
 
 import anyio
 from .stickers_client import MultiStickersClient, CREATE_PACK_RL
-from asqlite import asqlite
+import asqlite
 
 INTRO = """\
 Hi there! I'm a simple bot that converts Telegram stickers to Signal stickers and back.
