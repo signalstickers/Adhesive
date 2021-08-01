@@ -38,5 +38,3 @@ password = '...'  # second password
 # This is optional. If present, a button to submit your converted Signal sticker pack
 # to signalstickers.com will be displayed.
 signalstickers_api_token = '...'
-# whether to really propose sticker packs for realsies or to create PR branches but no PRs
-signalstickers_api_test_mode = true

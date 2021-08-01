@@ -127,7 +127,6 @@ async def maybe_enter_convo(event, is_link, response):
 			tags=[],
 			nsfw=False,
 			original=False,
-			animated=False,
 		)
 
 		# XXX instead of all this memory allocation,
@@ -220,25 +219,22 @@ async def maybe_enter_convo(event, is_link, response):
 			event.client.http,
 			meta,
 			token=event.client.config['signal']['stickers']['signalstickers_api_key'],
-			# TODO use configured log levels for this i guess
-			test_mode=event.client.config['signal']['stickers'].get('signalstickers_api_test_mode', False),
 		)
 
 		async with anyio.create_task_group() as tg:
 			await tg.spawn(partial(draft_msg.edit, buttons=None))
 			await tg.spawn(processing_message.delete)
 
-		if status_code not in range(200, 300):
+		if status_code != 200:
 			await event.reply(
 				"Ruh roh. Looks like we got an error from signalstickers.com. Here's what they said: "
 				f'“{data["error"]}”'
 			)
 		else:
 			await event.reply(
-				'Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! '
-				f'Check it out here: {data["pr_url"]}\n'
-				'If you have a GitHub account you can comment on it there, '
-				"or if you don't, you can DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
+				"Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! "
+				"[You can check its review status here](https://signalstickers.com/contribution-status).\n"
+				"If you have questions, DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
 				link_preview=False,
 			)
 
