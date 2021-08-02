@@ -120,6 +120,8 @@ async def maybe_enter_convo(event, is_link, response):
 				await tg.spawn(begin_ev.answer)
 				await tg.spawn(partial(orig_msg.edit, buttons=None))
 
+		# Animation is detected on signalstickers' back-end, so no need
+		# to store it
 		meta = dict(
 			pack_id=pack_id,
 			pack_key=pack_key,
@@ -219,23 +221,26 @@ async def maybe_enter_convo(event, is_link, response):
 			event.client.http,
 			meta,
 			token=event.client.config['signal']['stickers']['signalstickers_api_key'],
+			signalstickers_baseurl=event.client.config['signal']['stickers']['signalstickers_baseurl']
 		)
 
 		async with anyio.create_task_group() as tg:
 			await tg.spawn(partial(draft_msg.edit, buttons=None))
 			await tg.spawn(processing_message.delete)
 
-		if status_code != 200:
-			await event.reply(
-				"Ruh roh. Looks like we got an error from signalstickers.com. Here's what they said: "
-				f'“{data["error"]}”'
-			)
-		else:
+		if 200 <= status_code < 300:
+			# TODO use the direct link to /contribution-status for the pack created
+			# when the feature is available on signalstickers.com
 			await event.reply(
 				"Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! "
 				"[You can check its review status here](https://signalstickers.com/contribution-status).\n"
 				"If you have questions, DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
 				link_preview=False,
+			)
+		else:
+			await event.reply(
+				"Ruh roh. Looks like we got an error from signalstickers.com. Here's what they said: "
+				f'“{data["error"]}”'
 			)
 
 async def answer(ev):
