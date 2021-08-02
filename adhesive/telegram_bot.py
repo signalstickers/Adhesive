@@ -228,19 +228,17 @@ async def maybe_enter_convo(event, is_link, response):
 			await tg.spawn(partial(draft_msg.edit, buttons=None))
 			await tg.spawn(processing_message.delete)
 
-		if 200 <= status_code < 300:
-			# TODO use the direct link to /contribution-status for the pack created
-			# when the feature is available on signalstickers.com
+		if status_code not in range(200, 300):
+			await event.reply(
+				"Ruh roh. Looks like we got an error from signalstickers.com. Here's what they said: "
+				f'“{data["error"]}”'
+			)
+		else:
 			await event.reply(
 				"Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! "
 				"[You can check its review status here](https://signalstickers.com/contribution-status).\n"
 				"If you have questions, DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
 				link_preview=False,
-			)
-		else:
-			await event.reply(
-				"Ruh roh. Looks like we got an error from signalstickers.com. Here's what they said: "
-				f'“{data["error"]}”'
 			)
 
 async def answer(ev):
