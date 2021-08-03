@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import anyio
-from .stickers_client import MultiStickersClient, CREATE_PACK_RL
 import asqlite
+import contextlib
+from .stickers_client import MultiStickersClient, CREATE_PACK_RL
 
 INTRO = """\
 Hi there! I'm a simple bot that converts Telegram stickers to Signal stickers and back.
@@ -65,4 +66,5 @@ async def main():
 				await tg.spawn(run_signal, signal_client)
 
 if __name__ == '__main__':
-	anyio.run(main)
+	with contextlib.suppress(KeyboardInterrupt):
+		anyio.run(main)

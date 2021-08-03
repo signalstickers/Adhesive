@@ -123,9 +123,10 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 	signal_pack.stickers = [None] * tg_pack.set.count
 	signal_pack.author = tg_pack_url(tg_pack.set.short_name)
 
-	await download_tg_cover(tg_client, signal_pack, tg_pack)
-	for i, tg_sticker in enumerate(tg_pack.documents):
-		await add_tg_sticker(tg_client, signal_pack, i, tg_sticker)
+	# TODO fix cover downloading
+	async with anyio.create_task_group() as tg:
+		for i, tg_sticker in enumerate(tg_pack.documents):
+			await tg.spawn(add_tg_sticker, tg_client, signal_pack, i, tg_sticker)
 
 	try:
 		pack_info = await stickers_client.upload_pack(signal_pack)
@@ -145,38 +146,6 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 	)
 
 	yield True, (*pack_info, tg_pack_url(tg_pack.set.short_name))
-
-async def download_tg_cover(tg_client, signal_pack, tg_pack):
-	signal_sticker = signal_models.Sticker()
-	signal_sticker.id = tg_pack.set.count
-	thumb = get_thumb(tg_pack)
-	if thumb is None:
-		return
-
-	signal_sticker.image_data = await tg_client.download_file(
-		tl.types.InputStickerSetThumb(
-			stickerset=tl.types.InputStickerSetID(
-				id=tg_pack.set.id,
-				access_hash=tg_pack.set.access_hash,
-			),
-			volume_id=thumb.location.volume_id,
-			local_id=thumb.location.local_id,
-		),
-		file=bytes,
-	)
-	signal_pack.cover = signal_sticker
-
-def get_thumb(tg_pack):
-	set = tg_pack.set
-	try:
-		# Layer 120 and below
-		return set.thumb
-	except AttributeError:
-		# Layer 122+ (https://telegram.org/blog/voice-chats#sticker-outlines)
-		thumbs = set.thumbs
-		if not thumbs:
-			return None
-		return next(thumb for thumb in thumbs if isinstance(thumb, tl.types.PhotoSize))
 
 async def add_tg_sticker(tg_client, signal_pack: signal_models.LocalStickerPack, sticker_id: int, tg_sticker):
 	signal_sticker = signal_models.Sticker()
