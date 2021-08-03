@@ -324,7 +324,7 @@ def _img_to_png(image_data: bytes, thumbnail=False) -> bytes:
 async def propose_to_signalstickers_dot_com(http, metadata: dict, *, token, signalstickers_baseurl):
 	r = await http.put(
 		f'{signalstickers_baseurl}/v1/contribute/',
-		json={"pack": metadata},
+		json=dict(pack=metadata),
 		headers={'X-Auth-Token': token},
 		timeout=60,
 	)
