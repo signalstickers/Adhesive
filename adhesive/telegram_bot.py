@@ -120,6 +120,8 @@ async def maybe_enter_convo(event, is_link, response):
 				await tg.spawn(begin_ev.answer)
 				await tg.spawn(partial(orig_msg.edit, buttons=None))
 
+		# Animation is detected on signalstickers' back-end, so no need
+		# to store it
 		meta = dict(
 			pack_id=pack_id,
 			pack_key=pack_key,
@@ -127,7 +129,6 @@ async def maybe_enter_convo(event, is_link, response):
 			tags=[],
 			nsfw=False,
 			original=False,
-			animated=False,
 		)
 
 		# XXX instead of all this memory allocation,
@@ -220,8 +221,7 @@ async def maybe_enter_convo(event, is_link, response):
 			event.client.http,
 			meta,
 			token=event.client.config['signal']['stickers']['signalstickers_api_key'],
-			# TODO use configured log levels for this i guess
-			test_mode=event.client.config['signal']['stickers'].get('signalstickers_api_test_mode', False),
+			signalstickers_baseurl=event.client.config['signal']['stickers']['signalstickers_baseurl']
 		)
 
 		async with anyio.create_task_group() as tg:
@@ -235,10 +235,9 @@ async def maybe_enter_convo(event, is_link, response):
 			)
 		else:
 			await event.reply(
-				'Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! '
-				f'Check it out here: {data["pr_url"]}\n'
-				'If you have a GitHub account you can comment on it there, '
-				"or if you don't, you can DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
+				"Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! "
+				"[You can check its review status here](https://signalstickers.com/contribution-status).\n"
+				"If you have questions, DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
 				link_preview=False,
 			)
 
