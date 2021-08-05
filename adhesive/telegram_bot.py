@@ -236,7 +236,7 @@ async def maybe_enter_convo(event, is_link, response):
 		else:
 			await event.reply(
 				"Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! "
-				"[You can check its review status here](https://signalstickers.com/contribution-status).\n"
+				"[Check its review status](https://signalstickers.com/contribution-status).\n"
 				"If you have questions, DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
 				link_preview=False,
 			)
