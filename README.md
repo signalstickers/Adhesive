@@ -6,14 +6,14 @@ Adhesive is a simple bot which converts between Signal and Telegram sticker pack
 ![Screenshot of Adhesive (Signal) in action](signal-screenshot.png)
 
 A running Telegram instance is available: [@AdhesiveStickerBot](https://t.me/AdhesiveStickerBot).<br>
-There's also a Signal bot: +16692967337
+~~There's also a Signal bot: +16692967337~~ Down for now.
 
 ## Installation
 
 ```py
 python3 -m venv .venv
 . .venv/bin/activate
-pip install -Ur requirements.txt --use-feature=2020-resolver
+pip install -Ur requirements.txt
 ```
 
 Then copy `config.example.toml` to `config.toml` and fill it out according to the comments.
