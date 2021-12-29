@@ -17,7 +17,13 @@ You can also just send me a sticker and I'll convert the pack that it's from.
 This bot is open-source software under the terms of the AGPLv3 license. You can find the source code at:
 """
 
+DB_SCHEMA_PATH = './schema.sql'
+
 async def build_stickers_client(db, config):
+	if len(await db.fetchall("SELECT name FROM sqlite_master WHERE type='table'")) == 0:
+		with open(DB_SCHEMA_PATH, 'r') as f:
+			await db.executescript(f.read())
+
 	accounts = {account['username']: account for account in config['signal']['stickers']['accounts']}
 	bucket_rows = await db.fetchall('SELECT account_id, space_remaining, last_updated_at FROM signal_accounts')
 	for row in bucket_rows:
