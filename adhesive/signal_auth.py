@@ -1,6 +1,7 @@
 import os, sys
 import contextlib
 import json
+import sqlite3
 from collections import namedtuple
 from contextvars import ContextVar
 from sqlcipher3 import dbapi2 as sqlcipher
@@ -36,13 +37,20 @@ def db():
 		return _db.get()
 
 	config_path = get_config_path()
-	db_path = config_path / 'sql' / 'db.sqlite'
+
+	# issue #16
+	db_path = config_path / 'sql' / ('plaintext.sqlite' if sys.platform == 'darwin' else 'db.sqlite')
+
 	if not db_path.is_file():
 		raise FileNotFoundError(db_path, 'not found')
 
-	db = sqlcipher.connect(db_path)
-	key = json.loads((config_path / 'config.json').read_text())['key']
-	db.execute(f'''PRAGMA key="x'{key}'"''')
+	if sys.platform == 'darwin':
+		db = sqlite3.connect(db_path)
+	else:
+		db = sqlcipher.connect(db_path)
+		key = json.loads((config_path / 'config.json').read_text())['key']
+		db.execute(f'''PRAGMA key="x'{key}'"''')
+
 	_db.set(db)
 	return db
 
