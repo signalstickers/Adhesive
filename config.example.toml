@@ -1,4 +1,4 @@
-source_code_url = 'https://github.com/iomintz/Adhesive'
+source_code_url = 'https://github.com/signalstickers/Adhesive'
 # one of 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
 # defaults to 'INFO'
 log_level = 'INFO'
