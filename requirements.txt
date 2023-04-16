@@ -12,8 +12,8 @@ asqlite @ git+https://github.com/Rapptz/asqlite.git
 # for converting Signal stickers from WEBP to PNG
 Pillow ~= 8.0
 
-# telegram bot deps
-telethon ~= 1.0
+# telegram bot deps (pinned to prevent layer changes breaking the bot)
+Telethon == 1.24.0
 
 # signal deps
 sqlcipher3-binary ~= 0.4.0
