@@ -4,7 +4,8 @@ import json
 import sqlite3
 from collections import namedtuple
 from contextvars import ContextVar
-from sqlcipher3 import dbapi2 as sqlcipher
+if sys.platform != 'darwin':
+	from sqlcipher3 import dbapi2 as sqlcipher
 from pathlib import Path
 
 def get_config_path():
