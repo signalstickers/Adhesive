@@ -37,7 +37,7 @@ async def build_stickers_client(db, config):
 	return MultiStickersClient(db, accounts.values())
 
 async def main():
-	import toml
+	import qtoml as toml
 	with open('config.toml') as f:
 		config = toml.load(f)
 

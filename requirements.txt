@@ -1,7 +1,7 @@
 # assume all deps use semver, tighten otherwise
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
-toml ~= 0.10.0
+qtoml ~= 0.3.1
 humanize ~= 3.11
 asqlite @ git+https://github.com/Rapptz/asqlite.git
 
