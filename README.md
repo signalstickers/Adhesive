@@ -1,12 +1,11 @@
 # Adhesive
 
+***This project is archived until further notice.*** No bug reports will be accepted, and no commits will be made until https://github.com/mobilecoinofficial/auxin/issues/77 is resolved. A running Telegram instance is available: [@AdhesiveStickerBot](https://t.me/AdhesiveStickerBot), however, this is provided as is, and no effort to fix errors will be made. The Signal bot is also down.
+
 Adhesive is a simple bot which converts between Signal and Telegram sticker packs.
 
 ![Screenshot of Adhesive (Telegram) in action](tg-screenshot.png)
 ![Screenshot of Adhesive (Signal) in action](signal-screenshot.png)
-
-A running Telegram instance is available: [@AdhesiveStickerBot](https://t.me/AdhesiveStickerBot).<br>
-~~There's also a Signal bot: +16692967337~~ Down for now.
 
 ## Installation
 
