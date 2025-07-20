@@ -1,0 +1,17 @@
+{
+  "name": "signal-secrets-pull",
+  "productName": "Signal",
+  "version": "1.0.0",
+  "description": "Displays API keys for Signal stickers",
+  "license": "AGPL-3.0-or-later",
+  "author": "io",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "electron": "^37.2.3"
+  }
+}

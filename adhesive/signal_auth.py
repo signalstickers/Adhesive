@@ -32,6 +32,12 @@ def get_config_path():
 _db = ContextVar('db')
 
 def db():
+	try:
+		key = sys.argv[1]
+	except IndexError:
+		print('Error: pass the key as provided by Signal DB Key Pull as the first argument', file=sys.stderr)
+		sys.exit(1)
+
 	with contextlib.suppress(LookupError):
 		return _db.get()
 
@@ -41,7 +47,6 @@ def db():
 		raise FileNotFoundError(db_path, 'not found')
 
 	db = sqlcipher.connect(db_path)
-	key = json.loads((config_path / 'config.json').read_text())['key']
 	db.execute(f'''PRAGMA key="x'{key}'"''')
 	_db.set(db)
 	return db

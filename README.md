@@ -17,7 +17,13 @@ pip install -Ur requirements.txt
 
 Then copy `config.example.toml` to `config.toml` and fill it out according to the comments.
 For your Signal username/password you will need to install [Signal Desktop](https://signal.org/download/) and link it to your phone.
-Then run `python -m adhesive.signal_auth` to get your credentials.
+
+### Getting the API keys
+
+Install Node.JS and npm, then from within the signal-db-key-pull directory, run `npm run start`. It will open a new window with your DB key.
+Then run `python -m adhesive.signal_auth <your db key here>` to get your credentials.
+
+### Running the bot
 
 To run the bot, run `python -m adhesive.bot`.
 
