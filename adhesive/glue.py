@@ -240,7 +240,7 @@ async def convert_to_telegram(_, tg_client, stickers_client, pack_id, pack_key):
 	try:
 		tg_pack = await tg_client(tl.functions.stickers.CreateStickerSetRequest(
 			# this user id can be anyone but it has to not be a bot
-			user_id='lambda0987',
+			user_id='lambdadotdance',
 			title=title,
 			short_name=tg_short_name,
 			stickers=stickers,
