@@ -2,21 +2,20 @@
 # for 0.x libs, assume that 0.k+1 breaks 0.k
 
 qtoml ~= 0.3.1
-humanize ~= 3.11
-asqlite @ git+https://github.com/Rapptz/asqlite.git
+humanize ~= 4.12
+asqlite ~= 2.0.0
 
 # for converting Telegram animated stickers to animated PNG
 #lottie>=0.6.6,<0.7.0
 #apng>=0.3.4,<0.4.0
 
 # for converting Signal stickers from WEBP to PNG
-Pillow ~= 8.3
+Pillow ~= 11.3
 
 # telegram bot deps (pinned to prevent layer changes breaking the bot)
 Telethon == 1.24.0
 
 # signal deps
-sqlcipher3 ~= 0.5.2
-signalstickers-client ~= 3.0
-httpx ~= 0.16.0
-semaphore-bot ~= 0.11.0
+sqlcipher3 ~= 0.5.4
+signalstickers-client ~= 3.3
+# httpx is already pulled in by signalstickers-client
