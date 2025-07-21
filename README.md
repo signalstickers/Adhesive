@@ -20,8 +20,8 @@ For your Signal username/password you will need to install [Signal Desktop](http
 
 ### Getting the API keys
 
-Install Node.JS and npm, then from within the signal-db-key-pull directory, run `npm run start`. It will open a new window with your DB key.
-Then run `python -m adhesive.signal_auth <your db key here>` to get your credentials.
+Install Node.JS and npm, then from within the signal-db-key-pull directory, run `npm run start`.
+Then run the command it tells you to run to get your credentials.
 
 ### Running the bot
 

@@ -1,32 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('node:path')
-const SecretsReader = require('./signal-secrets')
-
-const createWindow = () => {
-	const win = new BrowserWindow({
-    	width: 800,
-    	height: 600,
-		webPreferences: {
-			preload: path.join(__dirname, 'preload.js'),
-		},
-	})
-
-	win.loadFile('index.html')
-}
+const { app } = require('electron')
+const getDbKey = require('./signal-secrets')
 
 app.whenReady().then(() => {
-	const secretsReader = new SecretsReader()
-
-	ipcMain.handle('get-signal-secrets', () => secretsReader.readAndDecryptSecrets())
-
-	createWindow()
-
-	app.on('activate', () => {
-		if (BrowserWindow.getAllWindows().length === 0) createWindow()
-	})
+	console.log(`Now run python -m adhesive.signal_auth ${getDbKey()} from the root of this repository.`)
+	app.quit()
 })
-
-app.on('window-all-closed', () => {
-	if (process.platform !== 'darwin') app.quit()
-})
-
