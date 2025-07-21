@@ -1,7 +1,7 @@
-const information = document.getElementById('info')
+const el = document.querySelector('span')
 
 const func = async () => {
-	information.innerText = `Pass this key to python -m adhesive.signal_auth: ${await window.getSignalSecrets()}`
+	el.innerText = await window.getSignalSecrets()
 }
 
 func()
