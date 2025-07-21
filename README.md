@@ -20,7 +20,7 @@ For your Signal username/password you will need to install [Signal Desktop](http
 
 ### Getting the API keys
 
-Install Node.JS and npm, then from within the signal-db-key-pull directory, run `npm install` followed by `npm run start`.
+Install Node.JS and npm, then run `npm -C signal-db-key-pull install` followed by `npm -C signal-db-key-pull run start`.
 Then run the command it tells you to run to get your credentials.
 
 ### Running the bot
