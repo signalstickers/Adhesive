@@ -21,8 +21,6 @@ signald_socket_path = '/var/run/signald/signald.sock'
 
 [[signal.stickers.accounts]]
 # get these by running `python -m adhesive.signal_auth`,
-# or by evaluating `window.reduxStore.getState().items.uuid_id` and `window.reduxStore.getState().items.password`
-# in the Signal Desktop developer tools console (Ctrl+Shift+I)
 # username is NOT the same as your phone number
 username = '...'
 password = '...'
@@ -41,4 +39,4 @@ signalstickers_api_token = '...'
 
 # The base url where signalstickers' API runs
 # Don't use trailing slash
-signalstickers_baseurl = 'https://api.signalstickers.com'
+signalstickers_baseurl = 'https://api.signalstickers.org'
