@@ -18,7 +18,7 @@ from .glue import (
 	convert_pack_interactive,
 	convert_to_signal,
 	signal_pack_url,
-	propose_to_signalstickers_dot_com,
+	propose_to_signalstickers_dot_org,
 )
 from .bot import INTRO
 
@@ -88,7 +88,7 @@ async def convert_sticker(event):
 		await maybe_enter_convo(event, is_link, response)
 
 async def maybe_enter_convo(event, is_link, response):
-	"""Go through the signalstickers.com propose flow if this is a Signal pack link"""
+	"""Go through the signalstickers.org propose flow if this is a Signal pack link"""
 	if not is_link or not isinstance(response, tuple):
 		await event.reply(response, link_preview=False)
 		return
@@ -104,7 +104,7 @@ async def maybe_enter_convo(event, is_link, response):
 	# 'p' for 'propose'
 	data = b'p' + convo_id
 	orig_link = response[-1]
-	buttons = [telethon.Button.inline('Propose to signalstickers.com', data=data)]
+	buttons = [telethon.Button.inline('Propose to signalstickers.org', data=data)]
 
 	timeout = 5 * 60
 
@@ -146,7 +146,7 @@ async def maybe_enter_convo(event, is_link, response):
 				),
 			# ...and the last one on its own row
 			], [telethon.Button.inline(
-				'Done (propose this to signalstickers.com)',
+				'Done (propose this to signalstickers.org)',
 				data=b'd' + convo_id,
 			)],
 		]
@@ -217,7 +217,7 @@ async def maybe_enter_convo(event, is_link, response):
 
 		await answer(button_ev)
 		processing_message = await event.respond('Submitting…')
-		status_code, data = await propose_to_signalstickers_dot_com(
+		status_code, data = await propose_to_signalstickers_dot_org(
 			event.client.http,
 			meta,
 			token=event.client.config['signal']['stickers']['signalstickers_api_key'],
@@ -230,14 +230,13 @@ async def maybe_enter_convo(event, is_link, response):
 
 		if status_code not in range(200, 300):
 			await event.reply(
-				"Ruh roh. Looks like we got an error from signalstickers.com. Here's what they said: "
+				"Ruh roh. Looks like we got an error from signalstickers.org. Here's what they said: "
 				f'“{data["error"]}”'
 			)
 		else:
 			await event.reply(
-				"Yuh, I submitted your pack to signalstickers.com. It will now be reviewed by a real meat-popsicle! "
-				"[Check its review status](https://signalstickers.com/contribution-status).\n"
-				"If you have questions, DM [@signalstickers on Twitter](https://twitter.com/signalstickers).",
+				"Yuh, I submitted your pack to signalstickers.org. It will now be reviewed by a real meat-popsicle! "
+				"[Check its review status](https://signalstickers.org/contribution-status).",
 				link_preview=False,
 			)
 

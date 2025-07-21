@@ -290,7 +290,7 @@ def _img_to_png(image_data: bytes, thumbnail=False) -> bytes:
 	del input
 	return out.getvalue()
 
-async def propose_to_signalstickers_dot_com(http, metadata: dict, *, token, signalstickers_baseurl):
+async def propose_to_signalstickers_dot_org(http, metadata: dict, *, token, signalstickers_baseurl):
 	r = await http.put(
 		f'{signalstickers_baseurl}/v1/contribute/',
 		json=dict(pack=metadata),
