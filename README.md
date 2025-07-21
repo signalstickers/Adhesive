@@ -1,6 +1,6 @@
 # Adhesive
 
-***This project is archived until further notice.*** No bug reports will be accepted, and no commits will be made until https://github.com/mobilecoinofficial/auxin/issues/77 is resolved. A running Telegram instance is available: [@AdhesiveStickerBot](https://t.me/AdhesiveStickerBot), however, this is provided as is, and no effort to fix errors will be made. The Signal bot is also down.
+The Signal bot is down currently, until I learn how to use Signal-CLI. However, bidirectional sticker pack conversion seems to work via [the Telegram bot](https://t.me/AdhesiveStickerBot).
 
 Adhesive is a simple bot which converts between Signal and Telegram sticker packs.
 
@@ -20,7 +20,7 @@ For your Signal username/password you will need to install [Signal Desktop](http
 
 ### Getting the API keys
 
-Install Node.JS and npm, then from within the signal-db-key-pull directory, run `npm run start`.
+Install Node.JS and npm, then from within the signal-db-key-pull directory, run `npm install` followed by `npm run start`.
 Then run the command it tells you to run to get your credentials.
 
 ### Running the bot
@@ -29,9 +29,7 @@ To run the bot, run `python -m adhesive.bot`.
 
 ## Signal bot setup
 
-Setting up a Signal bot is more involved but still doable.
-Follow steps 1–6 of the [Quick Start guide](https://github.com/lwesterhof/semaphore/blob/v0.8.0/README.md#quick-start) for the library I use.
-Then enter the phone number you used for setup in the `config.toml` file.
+TODO
 
 ## License
 
