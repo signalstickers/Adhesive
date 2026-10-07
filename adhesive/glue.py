@@ -273,7 +273,7 @@ def signal_pack_url(pack_id, pack_key):
 
 def tg_pack_url(short_name):
 	domain = random.choices(('t.me', 'telegram.dog'), weights=(0.875, 0.125))[0]
-	return f'https://{domain}/addstickers/{short_name}'
+	return f'{domain}/addstickers/{short_name}'
 
 async def img_to_png(image_data: bytes, *, thumbnail=False) -> bytes:
 	return await anyio.run_sync_in_worker_thread(_img_to_png, image_data, thumbnail)
