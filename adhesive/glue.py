@@ -121,7 +121,9 @@ async def convert_to_signal(db, tg_client, stickers_client, pack):
 	signal_pack = signal_models.LocalStickerPack()
 	signal_pack.title = tg_pack.set.title
 	signal_pack.stickers = [None] * tg_pack.set.count
-	signal_pack.author = tg_pack_url(tg_pack.set.short_name)
+	# on mobile, every character matters. if we include the url scheme,
+	# sometimes the pack short name will be cut off
+	signal_pack.author = tg_pack_url(tg_pack.set.short_name).removeprefix('https://')
 
 	# TODO fix cover downloading
 	async with anyio.create_task_group() as tg:
@@ -273,7 +275,7 @@ def signal_pack_url(pack_id, pack_key):
 
 def tg_pack_url(short_name):
 	domain = random.choices(('t.me', 'telegram.dog'), weights=(0.875, 0.125))[0]
-	return f'{domain}/addstickers/{short_name}'
+	return f'https://{domain}/addstickers/{short_name}'
 
 async def img_to_png(image_data: bytes, *, thumbnail=False) -> bytes:
 	return await anyio.run_sync_in_worker_thread(_img_to_png, image_data, thumbnail)
