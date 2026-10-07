@@ -4,6 +4,9 @@ source_code_url = 'https://github.com/signalstickers/Adhesive'
 log_level = 'INFO'
 
 [telegram]
+# non-bot username that all the converted sticker packs will be assigned to.
+# Don't worry, they won't show up in your sticker picker, only in the @Stickers menu.
+sticker_owner_username='myusername'
 # access api_id and api_hash at https://my.telegram.org/apps
 api_id = 123
 api_hash = 'deadbeef'
