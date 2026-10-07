@@ -9,6 +9,8 @@ Adhesive is a simple bot which converts between Signal and Telegram sticker pack
 
 ## Installation
 
+**NB**: due to [a bug in httpcore](https://github.com/encode/httpcore/discussions/995), only Python versions 3.13 and below are supported.
+
 ```py
 python3 -m venv .venv
 . .venv/bin/activate
